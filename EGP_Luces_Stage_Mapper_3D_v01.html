@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EGP Luces — Stage Mapper 3D · v0.1</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1018;--panel:#151c28;--panel2:#1d2736;--line:#2b394b;--ink:#f0f5fb;--muted:#a1b3c5;--brand:#21c6ad;--amber:#ffa94d;--blue:#7faaff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:#121925;border-bottom:1px solid var(--line);flex-wrap:wrap}.brand{display:flex;gap:12px;align-items:center}.logo{width:39px;height:39px;border-radius:11px;background:#093f3e;color:#50efd0;display:grid;place-items:center;font-size:20px}.brand h1{font-size:17px;margin:0}.brand small{color:var(--muted);font-size:11px}.badge{color:#ffcb8d;border:1px solid #675038;background:#30271e;border-radius:99px;padding:5px 10px;font-size:11px;font-weight:700}.topactions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.btn{color:var(--ink);border:1px solid #3c5065;background:#243246;border-radius:8px;padding:9px 11px;font-weight:600}.btn:hover{background:#30445b}.btn.primary{background:#077f76;border-color:#13a896}.btn.primary:hover{background:#0a9a8e}.btn.soft{background:#1e2a39}.btn.orange{color:#ffc99a;border-color:#785036}.app{display:grid;grid-template-columns:240px minmax(320px,1fr) 270px;min-height:calc(100vh - 75px)}.side{padding:15px 12px;border-right:1px solid var(--line);background:var(--panel);overflow:auto}.right{border-right:0;border-left:1px solid var(--line)}.section{margin-bottom:20px}.section h2{display:flex;justify-content:space-between;align-items:center;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#a6bfd4;margin:0 0 10px;padding:0 4px}.section p{font-size:12px;color:var(--muted);line-height:1.5}.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.btn-grid .btn{padding:10px 5px;font-size:12px}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.field label{color:#aac0d3;font-size:11px;font-weight:700;letter-spacing:.15px}.field input,.field select{color:var(--ink);background:#0e1723;border:1px solid #35455a;border-radius:7px;padding:9px 8px;min-width:0;width:100%;outline:none}.field input:focus,.field select:focus{border-color:var(--brand)}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.small-btn{font-size:11px;padding:7px 8px}
+.center{min-width:0;display:flex;flex-direction:column;overflow:hidden;background:#0c131e}.canvasbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:11px 13px;background:#111b29;border-bottom:1px solid var(--line)}.canvasbar .btn{font-size:12px;padding:7px 9px}.canvasbar .spacer{flex:1}.canvasbox{position:relative;min-height:400px;flex:1;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#1b3144 0%,#101b2a 50%,#0b111b 100%)}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}canvas.dragging{cursor:grabbing}.overlay{pointer-events:none;position:absolute;left:15px;top:15px;background:#08131fc9;border:1px solid #35465a;border-radius:10px;padding:9px 11px;color:#b8cde1;font-size:11px;max-width:225px;line-height:1.5}.overlay strong{color:#fff}.hud{position:absolute;bottom:12px;left:12px;right:12px;display:flex;gap:7px;align-items:center;justify-content:space-between;pointer-events:none}.hud span{font-size:11px;color:#d4e7fa;background:#101b2bdc;border:1px solid #30435b;border-radius:7px;padding:7px 9px}.footer{padding:11px 14px;font-size:11px;line-height:1.5;color:var(--muted);background:#111925;border-top:1px solid var(--line)}.items{display:flex;flex-direction:column;gap:5px}.item{display:flex;align-items:center;gap:9px;padding:9px 10px;text-align:left;color:var(--ink);border:1px solid #334458;border-radius:7px;background:#1a2634}.item.active{border-color:#26cebb;background:#193b42}.item .ico{font-size:18px}.item div{min-width:0}.item b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.item small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.empty{padding:10px;color:var(--muted);font-size:12px}.hint{border:1px solid #355e68;background:#13323b;border-radius:8px;color:#a8e3e1;padding:10px;font-size:11px;line-height:1.5}.divider{height:1px;background:var(--line);margin:11px 0}.counter{display:inline-block;color:#7ae7d4;font-weight:700}.status{color:#add9d5}.prop-title{font-size:16px;font-weight:750;margin-bottom:12px}.muted{color:var(--muted)}.note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}.alert{font-size:12px;color:#ffd7ac;background:#322518;border:1px solid #785030;border-radius:9px;padding:10px}.row-buttons{display:flex;gap:7px;flex-wrap:wrap}.row-buttons>.btn{flex:1}.separator{border:0;border-top:1px solid var(--line);margin:15px 0}.float{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#0a3e36;color:#c3fff3;border:1px solid #1a987e;border-radius:10px;padding:12px 16px;z-index:5;box-shadow:0 6px 35px #0008}.float.show{display:block}.toolbarLabel{color:var(--muted);font-size:12px}
+@media(max-width:1100px){.app{grid-template-columns:200px minmax(300px,1fr) 235px}.top{padding:10px}.side{padding:11px 8px}}
+@media(max-width:780px){.app{display:flex;flex-direction:column}.center{order:0}.canvasbox{height:400px;flex:none;min-height:400px}.side{order:1;border:0;border-top:1px solid var(--line)}.right{order:2}.section{margin-bottom:14px}.topactions{width:100%}.topactions .btn{flex:1}.hud span{font-size:10px}.overlay{font-size:10px}}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="brand"><div class="logo">✧</div><div><h1>EGP LUCES <span style="color:#6ee3d0">/ STAGE MAPPER 3D</span></h1><small>v0.1 · prototipo offline · geometría 3D real · sin salida DMX</small></div></div>
+ <div class="topactions"><span class="badge">DISEÑO · NO ENVÍA DMX</span><button id="save" class="btn primary">💾 Guardar local</button><button id="export" class="btn">↓ Exportar JSON</button><button id="import" class="btn soft">↑ Importar</button><input type="file" id="file" accept=".json,application/json" hidden/></div>
+</header>
+<div class="app">
+ <aside class="side">
+  <section class="section"><h2>01 · Lugar</h2>
+   <div class="field"><label>Plantilla</label><select id="preset"><option value="bar_small">Bar pequeño</option><option value="bar_medium">Bar mediano</option><option value="concert_small">Concierto pequeño</option><option value="concert_large">Concierto grande</option></select></div>
+   <button class="btn primary" id="usepreset" style="width:100%;margin:0 0 9px">Aplicar plantilla</button>
+   <div class="field"><label>Nombre del local</label><input type="text" id="venueName" placeholder="Ej. Bar Central" maxlength="60"/></div>
+   <div class="three"><div class="field"><label>Ancho (m)</label><input id="venueW" type="number" min="2" max="70" step=".5"/></div><div class="field"><label>Fondo (m)</label><input id="venueD" type="number" min="2" max="50" step=".5"/></div><div class="field"><label>Alto (m)</label><input id="venueH" type="number" min="2" max="20" step=".5"/></div></div>
+  </section>
+  <section class="section"><h2>02 · Músicos <span id="mcount" class="counter">4</span></h2>
+    <div class="field"><label>Cantidad (2–5)</label><select id="muscnt"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+    <div id="muslist" class="items"></div>
+    <p>Puedes cambiar los roles y arrastrar cada figura.</p>
+  </section>
+  <section class="section"><h2>03 · Estructuras <span id="tcount" class="counter">0</span></h2>
+    <div class="btn-grid"><button class="btn" data-truss="front">+ Frontal</button><button class="btn" data-truss="back">+ Trasero</button><button class="btn" data-truss="side">+ Lateral</button><button class="btn" data-truss="tower">+ Torre</button></div>
+    <p>Trusses ilimitados: muévelos, gíralos y cambia largo/altura. Las luces fijadas se mueven con ellos.</p><div id="trusslist" class="items"></div>
+  </section>
+  <section class="section"><h2>04 · Luces <span id="fcount" class="counter">0</span></h2>
+    <div class="btn-grid"><button class="btn" data-fixture="moving">+ Robótica</button><button class="btn" data-fixture="par">+ PAR</button><button class="btn" data-fixture="wash">+ Wash</button><button class="btn" data-fixture="bar">+ Barra LED</button></div><p>Si seleccionas primero un truss, la luz se coloca en él.</p><div id="fixlist" class="items"></div>
+  </section>
+ </aside>
+ <main class="center">
+  <nav class="canvasbar"><span class="toolbarLabel">CÁMARA</span><button id="cam3d" class="btn primary">3D libre</button><button id="camfront" class="btn">Frente</button><button id="camtop" class="btn">Planta</button><button id="fit" class="btn">Centrar</button><span class="spacer"></span><span class="toolbarLabel">Arrastrar · girar · zoom</span></nav>
+  <div class="canvasbox" id="box"><canvas id="viewport"></canvas><div class="overlay"><strong>Editor espacial 3D</strong><br/>Arrastra una figura, luz o truss para moverlo por el piso. Arrastra el fondo para girar la cámara. Usa la rueda para acercarte.</div><div class="hud"><span id="dimensions">6 × 4 × 3 m</span><span id="hudselected">Selecciona un objeto</span></div></div>
+  <div class="footer">Esta maqueta usa coordenadas X/Y/Z y cámara orbital reales. La geometría y los haces son orientativos: no valida rigging, cargas de truss, distancias de seguridad ni iluminación física. Identificación, calibración y transmisión Art-Net vendrán en módulos separados.</div>
+ </main>
+ <aside class="side right"><section class="section"><h2>Inspector · Objeto</h2><div id="inspector"><div class="hint">Selecciona una luz, músico o truss en la vista 3D o en la lista de la izquierda.</div></div></section>
+  <section class="section"><h2>Etapas del proyecto</h2>
+   <div class="hint"><strong>✓ Etapa 1 · Distribución 3D</strong><br/>Plantillas, músicos, trusses, luminarias, posiciones, rotaciones y guardado local.</div>
+   <div class="divider"></div><p><b>Etapa 2 · Patch DMX</b><br/>Perfiles, direcciones, verificación de solapamientos, pruebas visuales.</p>
+   <p><b>Etapa 3 · Calibración</b><br/>PAN/TILT por objetivo y orientación real.</p>
+   <p><b>Etapa 4 · Show</b><br/>Escenas, canciones y enlace aislado a EGP Bridge.</p>
+   <div class="alert">⚠ No conectes estructuras físicas basándote en este dibujo. Truss y cargas requieren montaje profesional.</div>
+  </section>
+ </aside>
+</div>
+<div class="float" id="toast" aria-live="polite"></div>
+<script>
+'use strict';
+(()=>{
+const $=id=>document.getElementById(id),canvas=$('viewport'),ctx=canvas.getContext('2d');
+const KEY='EGP_LUCES_STAGE_MAPPER_3D_V01';
+const TYPES={moving:['Robótica','🔦'],par:['PAR','💡'],wash:['Wash','🌈'],bar:['Barra LED','▤']};
+const ROLES=['Cantante','Guitarra','Bajo','Batería','Piano'];
+const ICONS={'Cantante':'🎤','Guitarra':'🎸','Bajo':'🎸','Batería':'🥁','Piano':'🎹'};
+const PRESETS={
+ bar_small:{name:'Bar pequeño',w:6,d:4,h:3,trs:[['trasero',0,1.35,2.65,4.3,0]]},
+ bar_medium:{name:'Bar mediano',w:9,d:6,h:3.8,trs:[['frontal',0,-1.5,3.35,6.5,0],['trasero',0,2.0,3.25,6.5,0]]},
+ concert_small:{name:'Concierto pequeño',w:12,d:8,h:6,trs:[['frontal',0,-2.7,5.2,9,0],['trasero',0,2.6,5.0,9,0]]},
+ concert_large:{name:'Concierto grande',w:22,d:13,h:11,trs:[['frontal',0,-4.8,9.2,17,0],['trasero',0,4.0,8.8,17,0],['lateral izq.',-9,0,8.3,9,90],['lateral der.',9,0,8.3,9,90]]}
+};
+let scene,selected=null,uid=1;
+const cam={az:.38,el:.55,zoom:1,target:{x:0,y:1.3,z:0}};
+function id(){return 'obj'+(uid++)}
+function musicians(n,w,d){const xs=n===2?[-w*.18,w*.18]:n===3?[-w*.25,0,w*.25]:n===4?[-w*.24,0,w*.24,0]:[-w*.27,-w*.08,w*.20,0,w*.30];return Array.from({length:n},(_,i)=>({id:id(),kind:'musician',role:ROLES[i],name:ROLES[i],x:xs[i],z:i===3?d*.22:-d*.10,y:0,yaw:0}));}
+function create(pkey){const p=PRESETS[pkey],old=scene?.name;scene={version:1,name:p.name,template:pkey,w:p.w,d:p.d,h:p.h,musicians:musicians(4,p.w,p.d),trusses:[],fixtures:[]};p.trs.forEach(([n,x,z,y,len,yaw])=>scene.trusses.push({id:id(),kind:'truss',shape:'horizontal',name:'Truss '+n,x,z,y,len,yaw}));selected=null;cam.az=.38;cam.el=.55;cam.zoom=1;cam.target={x:0,y:p.h*.22,z:0};sync();paint();}
+function all(){return [...scene.trusses,...scene.fixtures,...scene.musicians]}
+function find(id){return all().find(o=>o.id===id)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function rad(d){return d*Math.PI/180}
+function pos(o){if(o.kind==='fixture'&&o.parent){const t=scene.trusses.find(x=>x.id===o.parent);if(t){if(t.shape==='tower')return {x:t.x,z:t.z,y:clamp(t.y+o.u,0.25,scene.h+2)};const a=rad(t.yaw);return{x:t.x+Math.cos(a)*o.u,z:t.z+Math.sin(a)*o.u,y:t.y-.38}}}return{x:o.x,z:o.z,y:o.y||0}}
+function vec(x,y,z){return{x,y,z}}
+function add(a,b){return vec(a.x+b.x,a.y+b.y,a.z+b.z)}
+function sub(a,b){return vec(a.x-b.x,a.y-b.y,a.z-b.z)}
+function mul(a,n){return vec(a.x*n,a.y*n,a.z*n)}
+function dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z}
+function norm(a){const q=Math.hypot(a.x,a.y,a.z)||1;return mul(a,1/q)}
+function cross(a,b){return vec(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x)}
+let camera;
+function computeCamera(){const base=Math.max(scene.w*.75,scene.d,scene.h*.8,5);const dist=base*2.25*cam.zoom,cp=Math.cos(cam.el);
+ const P=vec(Math.sin(cam.az)*cp*dist+cam.target.x,Math.sin(cam.el)*dist+cam.target.y,-Math.cos(cam.az)*cp*dist+cam.target.z);const F=norm(sub(cam.target,P));const R=norm(cross(vec(0,1,0),F));const U=norm(cross(F,R));const f=Math.min(canvas.clientWidth,canvas.clientHeight)*1.16;return {P,F,R,U,f};}
+function proj(p){const v=sub(p,camera.P),dep=dot(v,camera.F);if(dep<=.1)return null;const scale=camera.f/dep;return{x:canvas.clientWidth/2+dot(v,camera.R)*scale,y:canvas.clientHeight/2-dot(v,camera.U)*scale,scale,depth:dep}}
+function rayFloor(sx,sy){const rw=canvas.clientWidth,rh=canvas.clientHeight;const dx=(sx-rw/2)/camera.f,dy=-(sy-rh/2)/camera.f;const D=norm(add(camera.F,add(mul(camera.R,dx),mul(camera.U,dy))));if(D.y>=-.008)return null;const t=-camera.P.y/D.y;if(t<=0)return null;return add(camera.P,mul(D,t))}
+function line(a,b,color='#63809b',width=1,dash=[]){const A=proj(a),B=proj(b);if(!A||!B)return;ctx.save();ctx.beginPath();ctx.setLineDash(dash);ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();ctx.restore()}
+function polygon(points,fill,stroke='#35445c',width=1){const pts=points.map(proj);if(pts.some(x=>!x))return;ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke()}}
+function label(p,txt,color='#d5e5f7',dy=0){const q=proj(p);if(!q)return;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='600 11px system-ui';const w=Math.min(ctx.measureText(txt).width+14,160),x=q.x,y=q.y+dy;ctx.fillStyle='#091321d9';ctx.fillRect(x-w/2,y-9,w,18);ctx.fillStyle=color;ctx.fillText(txt.length>24?txt.slice(0,22)+'…':txt,x,y)}
+function disc(p,r,color,stroke){const q=proj(p);if(!q)return;ctx.beginPath();ctx.arc(q.x,q.y,clamp(r*q.scale,2,24),0,Math.PI*2);ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}}
+function box3(p,w,h,d,color,stroke='#93b6d0'){const x=p.x,y=p.y,z=p.z;const b=[vec(x-w/2,y,z-d/2),vec(x+w/2,y,z-d/2),vec(x+w/2,y,z+d/2),vec(x-w/2,y,z+d/2)],t=b.map(o=>add(o,vec(0,h,0)));polygon([b[0],b[1],t[1],t[0]],color,stroke);polygon([b[1],b[2],t[2],t[1]],color,stroke);polygon(t,'#253c51',stroke)}
+function drawStage(){const W=scene.w/2,D=scene.d/2,H=scene.h;polygon([vec(-W,0,-D),vec(W,0,-D),vec(W,0,D),vec(-W,0,D)],'#192a38','#5e7990',2);const step=scene.w>15?2:1;
+ for(let x=-Math.floor(W/step)*step;x<=W;x+=step)line(vec(x,.003,-D),vec(x,.003,D),'#2e4456',1);
+ for(let z=-Math.floor(D/step)*step;z<=D;z+=step)line(vec(-W,.003,z),vec(W,.003,z),'#2e4456',1);
+ const wall='#385068';[[-W,-D],[W,-D],[-W,D],[W,D]].forEach(([x,z])=>line(vec(x,0,z),vec(x,H,z),wall,1,[5,6]));
+ const ps=[vec(-W,H,-D),vec(W,H,-D),vec(W,H,D),vec(-W,H,D)];ps.forEach((p,i)=>line(p,ps[(i+1)%4],wall,1,[5,6]));
+ label(vec(0,.05,-D+.2),'FRENTE / PÚBLICO','#7ccbd3',14);
+ label(vec(0,.05,D-.15),'FONDO','#a2b6c8');}
+function trussP(t,u,dy=0,dz=0){if(t.shape==='tower')return vec(t.x+dz,t.y+u,t.z+dy);const a=rad(t.yaw);return vec(t.x+Math.cos(a)*u-Math.sin(a)*dz,t.y+dy,t.z+Math.sin(a)*u+Math.cos(a)*dz)}
+function drawTruss(t){const s=t.shape==='tower'?0:Math.min(.16,scene.w/80),a=t.shape==='tower'?Math.min(.17,scene.w/100):s;const start=t.shape==='tower'?-t.y: -t.len/2, end=t.shape==='tower'?0:t.len/2;const sel=selected===t.id;const c=sel?'#2ee8cb':'#a8b4c3';const c2=sel?'#19b9a9':'#556879';
+ for(const dy of [-a,a])for(const dz of [-a,a])line(trussP(t,start,dy,dz),trussP(t,end,dy,dz),c,sel?3:2);
+ const segments=Math.max(2,Math.ceil((end-start)/.75));for(let i=0;i<=segments;i++){let u=start+(end-start)*i/segments;
+ for(const dy of [-a,a])line(trussP(t,u,dy,-a),trussP(t,u,dy,a),c2,1);
+ for(const dz of [-a,a])line(trussP(t,u,-a,dz),trussP(t,u,a,dz),c2,1);
+ if(i<segments){let u2=start+(end-start)*(i+1)/segments;line(trussP(t,u,-a,-a),trussP(t,u2,a,-a),c2,1);line(trussP(t,u,a,a),trussP(t,u2,-a,a),c2,1)}}
+ if(t.shape!=='tower'){line(vec(t.x,0,t.z),vec(t.x,t.y,t.z),'#3f5b64',1,[3,6]);label(vec(t.x,t.y+.40,t.z),t.name,sel?'#42efd6':'#d6e0e9')}else label(vec(t.x,t.y+.35,t.z),t.name,sel?'#42efd6':'#d6e0e9');}
+function drawMusician(m){const selectedNow=selected===m.id,base=vec(m.x,0,m.z),skin='#ffca93';disc(add(base,vec(0,.12,0)),.22,selectedNow?'#20d7c1':'#3e748b');
+ line(add(base,vec(0,.22,0)),add(base,vec(0,1.28,0)),selectedNow?'#3cffdf':'#b3cde8',5);
+ line(add(base,vec(0,.85,0)),add(base,vec(-.30,.55,.05)),'#9eb6d3',3);line(add(base,vec(0,.85,0)),add(base,vec(.30,.55,.05)),'#9eb6d3',3);
+ line(add(base,vec(0,.3,0)),add(base,vec(-.22,0,.05)),'#a8bcce',3);line(add(base,vec(0,.3,0)),add(base,vec(.22,0,.05)),'#a8bcce',3);
+ disc(add(base,vec(0,1.55,0)),.17,skin,selectedNow?'#18e3cc':null);
+ const icon=ICONS[m.role]||'👤';const q=proj(add(base,vec(0,2.06,0)));if(q){ctx.font='18px system-ui';ctx.textAlign='center';ctx.fillText(icon,q.x,q.y)}
+ label(add(base,vec(0,1.82,0)),m.name,selectedNow?'#46ffe5':'#e2edf8',-5);
+}
+function drawFixture(l){const p=pos(l),sel=selected===l.id;const c=sel?'#2df7d7':l.type==='moving'?'#89aaff':l.type==='par'?'#f8bb61':l.type==='wash'?'#e39eff':'#f69b9b';line(vec(p.x,0,p.z),p,'#48687c',1,[3,5]);disc(add(p,vec(0,.1,0)),l.type==='bar'?.28:.20,c,sel?'#fff':null);box3(vec(p.x,p.y-.15,p.z),l.type==='bar'?.8:.38,.30,.35,l.type==='moving'?'#364a70':'#694e39',c);const mark=proj(add(p,vec(0,.48,0)));if(mark){ctx.font='18px system-ui';ctx.textAlign='center';ctx.fillStyle=c;ctx.fillText(TYPES[l.type][1],mark.x,mark.y)}label(add(p,vec(0,.71,0)),l.name,sel?'#54ffe1':'#dbe7fa');}
+function paint(){if(!scene)return;camera=computeCamera();const W=canvas.clientWidth,H=canvas.clientHeight;ctx.clearRect(0,0,W,H);drawStage();scene.trusses.forEach(drawTruss);
+ // Overlay visual models; depth sorting keeps front objects legible.
+ const drawables=[...scene.fixtures,...scene.musicians].sort((a,b)=>{const pa=proj(pos(a)),pb=proj(pos(b));return (pb?.depth||0)-(pa?.depth||0)});
+ drawables.forEach(o=>o.kind==='musician'?drawMusician(o):drawFixture(o));
+ if(selected){let o=find(selected);if(o){const p=pos(o);disc(vec(p.x,.035,p.z),.24,'#26e6c74d','#36f3d9')}}}
+function resize(){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);paint()}
+function title(o){if(o.kind==='musician')return (ICONS[o.role]||'👤')+' '+o.name;if(o.kind==='fixture')return TYPES[o.type][1]+' '+o.name;return '▥ '+o.name}
+function lists(){const make=(arr,elem)=>{$(elem).innerHTML='';arr.forEach(o=>{const b=document.createElement('button');b.className='item'+(selected===o.id?' active':'');b.innerHTML=`<span class="ico">${o.kind==='truss'?'▥':o.kind==='musician'?(ICONS[o.role]||'👤'):TYPES[o.type][1]}</span><div><b></b><small></small></div>`;b.querySelector('b').textContent=o.name;let extra=o.kind==='truss'?(o.shape==='tower'?'Torre · ':'Truss · ')+Math.round(o.y*10)/10+' m':o.kind==='fixture'?(o.parent?'Colgada · ':'Piso / libre · ')+(o.address||'Sin patch'):o.role;b.querySelector('small').textContent=extra;b.onclick=()=>{selected=o.id;sync();paint()};$(elem).appendChild(b)});if(!arr.length)$(elem).innerHTML='<div class="empty">Sin elementos</div>'};make(scene.musicians,'muslist');make(scene.trusses,'trusslist');make(scene.fixtures,'fixlist');$('mcount').textContent=scene.musicians.length;$('tcount').textContent=scene.trusses.length;$('fcount').textContent=scene.fixtures.length;}
+function propHTML(field,label,value,type='number',min='',max='',step='0.1'){return `<div class="field"><label for="prop-${field}">${label}</label><input id="prop-${field}" data-field="${field}" type="${type}" value="${esc(String(value??''))}" ${type==='number'?`min="${min}" max="${max}" step="${step}"`:''}></div>`}
+function esc(s){return s.replace(/[&<"']/g,ch=>({'&':'&amp;','<':'&lt;','"':'&quot;',"'":'&#039;'}[ch]))}
+function inspect(){const div=$('inspector'),o=find(selected);$('hudselected').textContent=o?title(o):'Selecciona un objeto';if(!o){div.innerHTML='<div class="hint">Selecciona una luz, músico o truss en la vista 3D o en la lista de la izquierda.</div>';return}
+ let html=`<div class="prop-title">${esc(title(o))}</div>`+propHTML('name','Nombre',o.name,'text');
+ if(o.kind==='musician'){
+  html+=`<div class="field"><label>Instrumento / rol</label><select data-field="role">${ROLES.map(r=>`<option ${o.role===r?'selected':''}>${r}</option>`).join('')}</select></div>`;
+  html+='<div class="two">'+propHTML('x','X / izquierda-derecha',o.x)+propHTML('z','Z / fondo',o.z)+'</div>'+propHTML('yaw','Rotación (°)',o.yaw,'number','0','359','1');
+ }else if(o.kind==='truss'){
+  html+='<div class="two">'+propHTML('x','X (m)',o.x)+propHTML('z','Z (m)',o.z)+'</div>'+propHTML('y',o.shape==='tower'?'Altura torre (m)':'Altura centro (m)',o.y,'number','.2','30')+ (o.shape==='horizontal'?propHTML('len','Longitud (m)',o.len,'number','.5','50')+propHTML('yaw','Rotación horizontal (°)',o.yaw,'number','-360','360','1'):'');
+  const count=scene.fixtures.filter(f=>f.parent===o.id).length;html+=`<div class="hint">▥ ${count} luminaria(s) colgadas. Si mueves o rotas este truss, también se moverán.</div>`;
+ }else if(o.kind==='fixture'){
+  const opts=`<option value="">Sin truss / independiente</option>`+scene.trusses.map(t=>`<option value="${t.id}" ${o.parent===t.id?'selected':''}>${esc(t.name)}</option>`).join('');
+  html+=`<div class="field"><label>Montaje / truss</label><select data-field="parent">${opts}</select></div>`;
+  if(o.parent)html+=propHTML('u','Posición sobre el truss (m)',o.u,'number','-30','30');
+  else html+='<div class="two">'+propHTML('x','X (m)',o.x)+propHTML('z','Z (m)',o.z)+'</div>'+propHTML('y','Altura (m)',o.y,'number','.1','30');
+  html+='<div class="two">'+propHTML('address','Dirección DMX',o.address,'number','1','512','1')+propHTML('channels','N.º de canales',o.channels,'number','1','512','1')+'</div>'+propHTML('yaw','Orientación física (°)',o.yaw,'number','-360','360','1');
+  if(o.type==='moving')html+='<div class="two">'+propHTML('pan','PAN visual (°)',o.pan,'number','0','540','1')+propHTML('tilt','TILT visual (°)',o.tilt,'number','0','270','1')+'</div><div class="note">PAN y TILT son valores de preparación, todavía no transmiten DMX.</div>';
+ }
+ html+='<hr class="separator"><button id="removeItem" class="btn orange" style="width:100%">Eliminar objeto</button>';div.innerHTML=html;
+ div.querySelectorAll('[data-field]').forEach(el=>el.addEventListener('change',()=>{const key=el.dataset.field;let val=el.type==='number'?(el.value===''?'':Number(el.value)):el.value;if(key==='parent'){const cur=pos(o);o.parent=val;if(val){o.u=0}else{o.x=cur.x;o.z=cur.z;o.y=cur.y}}else if(key==='role'){o.role=val;o.name=val}else{o[key]=val}sync();paint()}));
+ div.querySelector('#removeItem').onclick=()=>{if(o.kind==='musician'){if(scene.musicians.length<=2){toast('El escenario necesita al menos 2 músicos');return}scene.musicians=scene.musicians.filter(e=>e.id!==o.id)}else if(o.kind==='truss'){scene.fixtures.forEach(f=>{if(f.parent===o.id){const p=pos(f);f.parent='';f.x=p.x;f.z=p.z;f.y=p.y}});scene.trusses=scene.trusses.filter(e=>e.id!==o.id)}else scene.fixtures=scene.fixtures.filter(e=>e.id!==o.id);selected=null;sync();paint()};
+ }
+function sync(){lists();inspect();$('venueName').value=scene.name;$('venueW').value=scene.w;$('venueD').value=scene.d;$('venueH').value=scene.h;$('muscnt').value=scene.musicians.length;$('preset').value=scene.template||'bar_small';$('dimensions').textContent=`${scene.w} × ${scene.d} × ${scene.h} m · ${scene.trusses.length} trusses · ${scene.fixtures.length} luces`;}
+function toast(str){let el=$('toast');el.textContent=str;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2500)}
+function addTruss(kind){let cx=0,cz=0,cy=Math.max(2,scene.h-.45),len=scene.w*.65,yaw=0,shape='horizontal',name='Truss';
+ if(kind==='front'){cz=-scene.d*.30;name='Truss frontal'}if(kind==='back'){cz=scene.d*.30;name='Truss trasero'}if(kind==='side'){cx=scene.w*.35;len=scene.d*.72;yaw=90;name='Truss lateral'}if(kind==='tower'){cx=scene.w*.3;cz=scene.d*.25;cy=Math.min(scene.h-.3,4);len=0;shape='tower';name='Torre truss'}
+ let count=scene.trusses.filter(t=>t.name.startsWith(name)).length+1;const t={id:id(),kind:'truss',shape,name:name+' '+count,x:cx,z:cz,y:cy,len,yaw};scene.trusses.push(t);selected=t.id;sync();paint();toast('Truss agregado al espacio 3D')}
+function addFixture(type){const parent=scene.trusses.find(t=>t.id===selected);const idd=id();const fixture={id:idd,kind:'fixture',type,name:TYPES[type][0]+' '+(scene.fixtures.length+1),parent:parent?.id||'',u:0,x:0,z:-scene.d*.15,y:.4,yaw:0,pan:0,tilt:0,address:'',channels:''};scene.fixtures.push(fixture);selected=idd;sync();paint();toast(parent?'Luz agregada al truss seleccionado':'Luz agregada al escenario')}
+function setMusicians(n){const prev=scene.musicians.slice();if(n<prev.length){const gone=prev.slice(n).map(x=>x.id);if(gone.includes(selected))selected=null;scene.musicians=prev.slice(0,n)}else for(let i=prev.length;i<n;i++){scene.musicians.push({id:id(),kind:'musician',role:ROLES[i],name:ROLES[i],x:(i-2)*scene.w*.13,z:i===3?scene.d*.24:0,y:0,yaw:0})}sync();paint()}
+function hit(sx,sy){const objects=[...scene.fixtures,...scene.musicians,...scene.trusses];let best=null,bd=38;
+ for(const o of objects){const p=pos(o),q=proj(o.kind==='musician'?add(p,vec(0,1.35,0)):o.kind==='fixture'?add(p,vec(0,.42,0)):add(p,vec(0,.15,0)));if(!q)continue;let dist=Math.hypot(q.x-sx,q.y-sy);
+ if(o.kind==='truss'){const a=proj(trussP(o,o.shape==='tower'?-o.y:-o.len/2)),b=proj(trussP(o,o.shape==='tower'?0:o.len/2));if(a&&b){const vx=b.x-a.x,vy=b.y-a.y,dd=vx*vx+vy*vy||1,t=clamp(((sx-a.x)*vx+(sy-a.y)*vy)/dd,0,1);dist=Math.min(dist,Math.hypot(sx-(a.x+t*vx),sy-(a.y+t*vy)));}}
+ if(dist<bd){best=o;bd=dist}}
+ return best}
+let drag=null;
+canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;camera=computeCamera();const o=hit(x,y);if(o){selected=o.id;sync();paint();const q=rayFloor(x,y);drag={mode:'object',id:o.id,x0:q?.x||0,z0:q?.z||0,ox:o.x,oz:o.z,u:o.u||0};}else drag={mode:'camera',x,y,az:cam.az,el:cam.el};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging')});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+ if(drag.mode==='camera'){cam.az=drag.az-(x-drag.x)*.007;cam.el=clamp(drag.el+(y-drag.y)*.006,.08,1.54)}
+ else{const o=find(drag.id);if(!o)return;const q=rayFloor(x,y);if(q){if(o.kind==='fixture'&&o.parent){const t=scene.trusses.find(tr=>tr.id===o.parent);if(t){if(t.shape==='horizontal'){const a=rad(t.yaw);o.u=clamp((q.x-t.x)*Math.cos(a)+(q.z-t.z)*Math.sin(a),-t.len/2,t.len/2)}}}else{o.x=clamp(drag.ox+q.x-drag.x0,-scene.w*.70,scene.w*.70);o.z=clamp(drag.oz+q.z-drag.z0,-scene.d*.70,scene.d*.70)}}}
+ paint()});
+function stopDrag(){if(drag){drag=null;canvas.classList.remove('dragging');sync();paint()}}
+canvas.addEventListener('pointerup',stopDrag);canvas.addEventListener('pointercancel',stopDrag);
+canvas.addEventListener('wheel',e=>{e.preventDefault();cam.zoom=clamp(cam.zoom*Math.exp(e.deltaY*.001),.3,4);paint()},{passive:false});
+$('cam3d').onclick=()=>{cam.az=.38;cam.el=.55;paint()};$('camfront').onclick=()=>{cam.az=0;cam.el=.12;paint()};$('camtop').onclick=()=>{cam.az=0;cam.el=1.53;paint()};$('fit').onclick=()=>{cam.zoom=1;cam.target={x:0,y:scene.h*.22,z:0};paint()};
+$('usepreset').onclick=()=>{if(!confirm('¿Reemplazar el escenario actual con la plantilla? Puedes guardar o exportar antes.'))return;create($('preset').value)};
+$('muscnt').onchange=e=>setMusicians(Number(e.target.value));
+$('venueName').onchange=e=>{scene.name=e.target.value.slice(0,60)||'Escenario sin nombre';sync()};
+[['venueW','w'],['venueD','d'],['venueH','h']].forEach(([e,k])=>$(e).onchange=ev=>{scene[k]=clamp(Number(ev.target.value)||scene[k],2,k==='h'?20:70);sync();paint()});
+document.querySelectorAll('[data-truss]').forEach(b=>b.onclick=()=>addTruss(b.dataset.truss));document.querySelectorAll('[data-fixture]').forEach(b=>b.onclick=()=>addFixture(b.dataset.fixture));
+function validate(s){if(!s||!Array.isArray(s.musicians)||!Array.isArray(s.trusses)||!Array.isArray(s.fixtures)||!(s.w>0&&s.d>0&&s.h>0))throw Error('Estructura de escenario no válida');return s}
+$('save').onclick=()=>{try{localStorage.setItem(KEY,JSON.stringify(scene));toast('Escenario guardado en este navegador')}catch(e){toast('No se pudo guardar: usa Exportar JSON')}};
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify(scene,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='EGP-Escenario-'+(scene.name||'nuevo').replace(/[^\p{L}\p{N}_-]/gu,'_')+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),400);toast('Escenario exportado')};
+$('import').onclick=()=>$('file').click();$('file').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{const v=validate(JSON.parse(await f.text()));scene=v;selected=null;uid=1+Math.max(0,...all().map(x=>Number(String(x.id).replace('obj',''))||0));sync();paint();toast('Escenario importado')}catch(err){alert('No se pudo abrir el escenario JSON: '+err.message)}e.target.value=''};
+try{const saved=localStorage.getItem(KEY);if(saved){scene=validate(JSON.parse(saved));uid=1+Math.max(0,...[...scene.trusses,...scene.fixtures,...scene.musicians].map(x=>Number(String(x.id).replace('obj',''))||0));sync();paint()}}catch(e){console.warn(e)}
+if(!scene)create('bar_small');const ro=new ResizeObserver(resize);ro.observe($('box'));requestAnimationFrame(resize);
+})();
+</script>
+</body>
+</html>
