@@ -1,13 +1,19 @@
 # EGP Luces — Stage Mapper 3D
 
-Editor 3D de escenarios, músicos, trusses y luces DMX para el sistema EGP.
+Editor visual 3D de escenarios para EGP Luces, independiente de la operación EGP Bridge / Logic.
 
 ## Uso
 
-1. Abre el [editor](https://danieldelgado29.github.io/egp-luces-stage-mapper/) o abre `index.html` en tu navegador.
-2. Elige una plantilla y ajusta las dimensiones del escenario. Añade músicos, luces y trusses desde el panel del editor.
-3. Explora el escenario con los controles de cámara. Usa **Guardar local** para conservarlo en el navegador y **Exportar JSON** para descargar una copia que puedes volver a abrir con **Importar**.
+Abrir `index.html` o https://danieldelgado29.github.io/egp-luces-stage-mapper/ desde Mac, iPhone o cualquier navegador compatible.
 
-## Estado
+- Configuración: plantillas, local, medidas aproximadas en pasos (55 cm) o metros, músicos y sus instrumentos, luces y trusses.
+- Escenario 3D: colocar y orientar visualmente los elementos.
+- Shows guardados: almacenamiento local en cada navegador; exportar/importar JSON para transportar shows entre dispositivos.
+- Iniciar un escenario nuevo crea un dúo (cantante y guitarra). El menú de músicos contiene 2, 3, 4, 5 y Custom (6 a 30).
+- Cada músico admite un rol o instrumento personalizado y nombre individual.
 
-V0.1 es un prototipo experimental de diseño y visualización. La transmisión Art-Net/DMX y la integración con el controlador PKnight quedan para una fase posterior. El [HTML original de V0.1](versions/EGP_Luces_Stage_Mapper_3D_v01.html) se conserva en el repositorio.
+**Advertencia:** Este editor no transmite señal DMX y no verifica la seguridad estructural de los montajes. La detección y calibración de luces son futuras etapas.
+
+## Publicación
+
+Se conserva cada versión íntegra bajo `versions/`, y `index.html` siempre corresponde a la versión pública más reciente después de aprobar y probar los cambios. No modificar componentes del sistema EGP Bridge de producción.
