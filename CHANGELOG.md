@@ -90,3 +90,8 @@
 ## V0.5 - Correccion tactil iPhone
 - Seleccion de luces sobre trusses; selector de objeto y luminaria por nombre.
 - Arrastre sobre truss, microajustes y gesto de dos dedos para zoom.
+
+## V0.17 — 2026-11-07
+- Aprender colores por aparato: seis colores y múltiples canales/valores por color.
+- Guardado de borradores dentro del show y acceso desde lista, Patch y 3D.
+- Simulación solamente; no hay emisión DMX real.
