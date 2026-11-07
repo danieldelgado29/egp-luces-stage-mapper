@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.6 — 2026-11-07
+- Selección Todos por defecto.
+- Objetivos visuales para robóticas.
+- Zoom y arrastre táctil conservados.
+- Sin transmisión DMX real.
+
 ## V0.4 — 2026-11-05
 - Nuevos escenarios con 2 músicos por defecto: cantante y guitarra.
 - Menú con 2, 3, 4, 5 o Custom (hasta 30 integrantes).
