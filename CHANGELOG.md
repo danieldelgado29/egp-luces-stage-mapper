@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.15 — 2026-11-07
+- Búsqueda simulada 100 → 50 → 25 → 5 → 1.
+- Borrador de calibración PAN/TILT para centro, ubicación propia y derecha.
+- Opciones de color RGB, RGBW, rueda y blanco.
+- Sin envío Art-Net/DMX real.
+
 ## V0.14 — 2026-11-07
 - La selección de una luz en las listas no abre automáticamente Editar elemento.
 - Botón Buscar dirección en lista de luces, Patch y escenario 3D.
