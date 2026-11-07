@@ -1,5 +1,10 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.11 — 2026-11-07
+- Oculta etiquetas de nombres de músicos en la vista 3D.
+- Mantiene figuras, iconos, selección, edición y objetivos de iluminación.
+- No modifica gestos, simulación de haces ni transmisión DMX.
+
 ## V0.10 — 2026-11-07
 - Configuración: 01 Estructuras, 02 Luces.
 - Asignar y Borrar en listas.
