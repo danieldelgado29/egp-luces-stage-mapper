@@ -1,5 +1,12 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.14 — 2026-11-07
+- La selección de una luz en las listas no abre automáticamente Editar elemento.
+- Botón Buscar dirección en lista de luces, Patch y escenario 3D.
+- Ensayo supervisado de búsqueda por bloques de 5, 10 o 20 direcciones y refinamiento individual.
+- El ensayo no transmite Art-Net ni altera direcciones reales.
+- Conservados el patch, la identificación manual, los gestos y la simulación 3D.
+
 ## V0.13 — 2026-11-07
 - Identificación asistida de luces sin marca, sin emisión DMX.
 - Fichas pendientes, funciones por canal y confirmación manual.
