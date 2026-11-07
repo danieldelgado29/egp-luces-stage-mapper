@@ -1,5 +1,12 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.9 — 2026-11-07
+- Lugar, plantilla, medidas con pasos y músicos en Nuevo show.
+- Editar show para modificar la configuración guardada sin borrar luces ni trusses.
+- Configuración reducida a Luces, Estructuras y Propiedades.
+- Conservado el motor de zoom, selección, arrastre y haces 3D.
+
+
 ## V0.8 — 2026-11-07
 - Nuevo show y Abrir show en inicio.
 - Lugar y músicos simplificados.
