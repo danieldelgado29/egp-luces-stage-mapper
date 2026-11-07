@@ -1,5 +1,12 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.18 — 2026-11-07
+- Calibrador XY simplificado: tres botones Centro, Mi ubicación y Mi derecha con guardado individual.
+- Referencia de operador dentro o fuera del escenario.
+- Ajustes avanzados plegados; color técnico separado en Aprender colores.
+- Oculta los controles de cámara, conserva gestos y zoom.
+- Sin transmisión Art-Net/DMX real.
+
 ## V0.16 — 2026-11-07
 - Calibrador XY de robóticas con control táctil y deslizadores.
 - Ajustes gruesos de 16 y finos de 1, límites e inversión de ejes.
