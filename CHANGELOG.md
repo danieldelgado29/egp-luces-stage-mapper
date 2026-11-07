@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.8 — 2026-11-07
+- Nuevo show y Abrir show en inicio.
+- Lugar y músicos simplificados.
+- Shows guardados fuera de Configuración.
+- Sin cambios al motor 3D ni DMX.
+
 ## V0.7 — 2026-11-07
 - Conos de luz simulados en 3D para robóticas, PAR, wash y barras LED.
 - Color, intensidad, apertura e inclinación visual editables por luminaria.
