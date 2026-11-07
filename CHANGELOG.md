@@ -1,5 +1,12 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.13 — 2026-11-07
+- Identificación asistida de luces sin marca, sin emisión DMX.
+- Fichas pendientes, funciones por canal y confirmación manual.
+- Copia de funciones entre luces compatibles (sin copiar dirección).
+- Prevención de solapamientos al confirmar una dirección.
+- Zoom, arrastre y 3D conservados.
+
 ## V0.12 — 2026-11-07
 - Patch DMX pasivo de universo 0 y 512 canales.
 - Entrada de modo/modelo, direccion y cantidad de canales por luminaria.
