@@ -102,3 +102,10 @@
 - Aprender colores por aparato: seis colores y múltiples canales/valores por color.
 - Guardado de borradores dentro del show y acceso desde lista, Patch y 3D.
 - Simulación solamente; no hay emisión DMX real.
+
+## V0.19 — 2026-11-07
+- Editor de canciones y escenas por luminaria en el show actual.
+- Línea de tiempo con eventos por compás y pulso.
+- Exportación de archivo MIDI estándar (canal 16) y mapa de escenas JSON.
+- Notas MIDI persistentes para cada escena; no se reutilizan tras eliminación.
+- Modo diseño, sin transmisión DMX, receptor MIDI ni alteración de Logic/Bridge.
