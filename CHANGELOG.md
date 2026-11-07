@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.12 — 2026-11-07
+- Patch DMX pasivo de universo 0 y 512 canales.
+- Entrada de modo/modelo, direccion y cantidad de canales por luminaria.
+- Autopatch de direcciones libres, deteccion de rangos invalidos y solapamientos.
+- Conserva shows, estructura 3D, gestos y haz simulado. No emite Art-Net.
+
 ## V0.11 — 2026-11-07
 - Oculta etiquetas de nombres de músicos en la vista 3D.
 - Mantiene figuras, iconos, selección, edición y objetivos de iluminación.
