@@ -17,3 +17,8 @@ Abrir `index.html` o https://danieldelgado29.github.io/egp-luces-stage-mapper/ d
 ## Publicación
 
 Se conserva cada versión íntegra bajo `versions/`, y `index.html` siempre corresponde a la versión pública más reciente después de aprobar y probar los cambios. No modificar componentes del sistema EGP Bridge de producción.
+
+## V0.5 (iPhone)
+- Selector de luces por nombre, modo tactil que da prioridad a las luminarias sobre los trusses.
+- Ajuste de posicion individual con arrastre y flechas. Zoom con dos dedos.
+- Sin salida DMX real. Las claves de guardado de shows siguen iguales.

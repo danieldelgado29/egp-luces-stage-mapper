@@ -16,3 +16,7 @@
 
 ## V0.1 — 2026-11-05
 - Primer Stage Mapper 3D: escenarios, músicos, luces, trusses y cámara.
+
+## V0.5 - Correccion tactil iPhone
+- Seleccion de luces sobre trusses; selector de objeto y luminaria por nombre.
+- Arrastre sobre truss, microajustes y gesto de dos dedos para zoom.
