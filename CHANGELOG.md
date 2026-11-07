@@ -1,5 +1,13 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.7 — 2026-11-07
+- Conos de luz simulados en 3D para robóticas, PAR, wash y barras LED.
+- Color, intensidad, apertura e inclinación visual editables por luminaria.
+- El objetivo 3D de las robóticas dirige la previsualización.
+- Botón para mostrar u ocultar haces; se conserva selección, arrastre y zoom táctiles.
+- Sin emisión Art-Net ni DMX.
+
+
 ## V0.6 — 2026-11-07
 - Selección Todos por defecto.
 - Objetivos visuales para robóticas.
