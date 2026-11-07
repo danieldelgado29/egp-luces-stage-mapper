@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.16 — 2026-11-07
+- Calibrador XY de robóticas con control táctil y deslizadores.
+- Ajustes gruesos de 16 y finos de 1, límites e inversión de ejes.
+- Tres posiciones de referencia guardadas por luminaria.
+- Simulación sin salida física Art-Net/DMX.
+
 ## V0.15 — 2026-11-07
 - Búsqueda simulada 100 → 50 → 25 → 5 → 1.
 - Borrador de calibración PAN/TILT para centro, ubicación propia y derecha.
