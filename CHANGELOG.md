@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.25 — 2026-11-08
+- Modo Show: caja de herramientas vertical derecha y escenario dominante.
+- Presets musicales en barra inferior.
+- Corregida carga de audio: crea canción si no existe y muestra errores de reproducción.
+- Sin transmisión Art-Net/DMX real.
+
 ## V0.24 — 2026-11-08
 - Selector de luminarias: todas, PAR, roboticas o individuales.
 - Colores y objetivos aplicables a grupos distintos dentro de la misma escena.
