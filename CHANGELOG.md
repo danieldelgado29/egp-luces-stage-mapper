@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.21 — 2026-11-08
+- Modo Show 3D sobre la escena original, con ambiente oscuro.
+- Consola de colores, músicos y efectos, con visualización inmediata.
+- Reproducción de cues por tiempo real y captura REC vinculada al audio local.
+- Conserva edición sin activar Art-Net/DMX.
+
 ## V0.20 — 2026-11-08
 - Consola de grabación de audio local, sin BPM.
 - Eventos de colores, músicos y FX, editables por tiempo real.
