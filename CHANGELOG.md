@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.23 — 2026-11-08
+- Modo Show 3D a pantalla completa con salida siempre visible.
+- Escenario ocupa ~85% de altura en escritorio; botones compactos inferiores.
+- Oscuridad en toda la escena, sin textos flotantes ni controles de edición.
+- Conserva los eventos de grabación y la vista de edición. Sin Art-Net real.
+
 ## V0.22 — 2026-11-08
 - Acceso directo al Show 3D desde la barra superior y Canciones.
 - Entrada al Show 3D sin canción para previsualización manual.
