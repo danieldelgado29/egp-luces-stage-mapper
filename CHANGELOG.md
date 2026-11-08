@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.22 — 2026-11-08
+- Acceso directo al Show 3D desde la barra superior y Canciones.
+- Entrada al Show 3D sin canción para previsualización manual.
+- Conserva grabación con audio cuando existe canción.
+- Conserva edición sin activar Art-Net/DMX.
+
 ## V0.21 — 2026-11-08
 - Modo Show 3D sobre la escena original, con ambiente oscuro.
 - Consola de colores, músicos y efectos, con visualización inmediata.
