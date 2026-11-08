@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.24 — 2026-11-08
+- Selector de luminarias: todas, PAR, roboticas o individuales.
+- Colores y objetivos aplicables a grupos distintos dentro de la misma escena.
+- Guardar y recuperar escenas completas en el show.
+- Eventos por luminaria en la linea temporal de segundos. Sin DMX real.
+
 ## V0.23 — 2026-11-08
 - Modo Show 3D a pantalla completa con salida siempre visible.
 - Escenario ocupa ~85% de altura en escritorio; botones compactos inferiores.
