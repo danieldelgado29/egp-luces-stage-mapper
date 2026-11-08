@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.20 — 2026-11-08
+- Consola de grabación de audio local, sin BPM.
+- Eventos de colores, músicos y FX, editables por tiempo real.
+- Línea de tiempo y exportación JSON.
+- Solo diseño: sin DMX ni integración Logic en vivo.
+
 ## V0.18 — 2026-11-07
 - Calibrador XY simplificado: tres botones Centro, Mi ubicación y Mi derecha con guardado individual.
 - Referencia de operador dentro o fuera del escenario.
