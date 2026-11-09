@@ -1,5 +1,12 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.28 - 2026-11-09
+- AUTO con ataque adaptativo y BPM orientativo.
+- Cambios de color por frases musicales, incluso en mezclas comprimidas.
+- Intensidad de show: suave, medio, intenso; paletas configurables.
+- Colores complementarios entre PAR y roboticas, si ambos existen.
+- Analisis local sin salida Art-Net ni modificacion de Logic o Bridge.
+
 ## V0.27 — 2026-11-09
 - TAP general y TAP FIX independiente del BPM de Logic.
 - Conversión de golpes TAP FIX en pulsos temporizados.
