@@ -1,5 +1,11 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.26 — 2026-11-08
+- Al tocar una automatización, abrir vista previa y editor sin ejecutarla.
+- Ajustes separados para PAR y robóticas: color, intensidad, objetivo y efecto.
+- Aplicar o grabar acciones como escena de la línea de tiempo.
+- Sin envío Art-Net real.
+
 ## V0.25 — 2026-11-08
 - Modo Show: caja de herramientas vertical derecha y escenario dominante.
 - Presets musicales en barra inferior.
