@@ -1,5 +1,14 @@
 # Historial de versiones — EGP Luces Stage Mapper
 
+## V0.27 — 2026-11-09
+- TAP general y TAP FIX independiente del BPM de Logic.
+- Conversión de golpes TAP FIX en pulsos temporizados.
+- Análisis AUTO local por energía/transitorios, con propuesta editable.
+- Copia y recuperación de biblioteca completa de shows (JSON).
+- Nuevo show sin campo de nombres de músicos.
+- Eliminación de iconos de linterna/foco del selector de luces.
+- Sin transmisión DMX ni acceso a Logic o Bridge.
+
 ## V0.26 — 2026-11-08
 - Al tocar una automatización, abrir vista previa y editor sin ejecutarla.
 - Ajustes separados para PAR y robóticas: color, intensidad, objetivo y efecto.
