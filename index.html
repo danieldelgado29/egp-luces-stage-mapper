@@ -1884,6 +1884,17 @@ function egpShowFixture(f){
   if(st.target==='Todos')z.aimTarget='center';
   else{const choices={'Singer':['Cantante','Coros'],'Guitar':['Guitarra'],'Bass':['Bajo'],'Drums':['Batería','Percusión'],'Keys':['Piano','Teclado']};const t=scene.musicians.find(m=>(choices[st.target]||[]).includes(m.role));if(t)z.aimTarget=t.id;}
  }
+
+ const preview=window.__EGP_SEQ_3D_V035;
+ const lane=scene.fixtures.findIndex(x=>x.id===f.id);
+
+ if(preview?.active&&lane>=0){
+  const clip=preview.lights[lane];
+  if(clip){
+   z.lightColor=clip.color;
+   z.intensity=100;
+  }
+ }
  return z
 }
 function egpShowUpdateTime(){
@@ -2464,6 +2475,6 @@ try{const saved=localStorage.getItem(KEY);if(saved){scene=validate(JSON.parse(sa
 if(!scene)create('bar_small');$('touchMode').value='all';renderSavedShows();switchPage('home');const ro=new ResizeObserver(resize);ro.observe($('box'));requestAnimationFrame(resize);
 })();
 </script>
-<script src="egp-show-sequencer-v033.js?v=033" defer></script>
+<script src="egp-show-sequencer-v033.js?v=035" defer></script>
 </body>
 </html>
