@@ -1892,7 +1892,9 @@ function egpShowFixture(f){
   const clip=preview.lights[lane];
   if(clip){
    z.lightColor=clip.color;
-   z.intensity=100;
+   z.intensity=clamp(
+    Number(clip.level??100),0,100
+   );
   }
  }
  return z
@@ -2475,6 +2477,6 @@ try{const saved=localStorage.getItem(KEY);if(saved){scene=validate(JSON.parse(sa
 if(!scene)create('bar_small');$('touchMode').value='all';renderSavedShows();switchPage('home');const ro=new ResizeObserver(resize);ro.observe($('box'));requestAnimationFrame(resize);
 })();
 </script>
-<script src="egp-show-sequencer-v033.js?v=035" defer></script>
+<script src="egp-show-sequencer-v033.js?v=036" defer></script>
 </body>
 </html>

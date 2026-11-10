@@ -70,6 +70,80 @@ body.egp-show-mode #stagePage #box canvas{display:block!important;width:100%!imp
 const root=document.createElement('section');root.id='egpSeq29';root.innerHTML=`<div class="egp29bar"><button id="egp29Play" title="Play/Pausa · Espacio">▶ Play</button><button id="egp29Stop" title="Stop">■ Stop</button><button id="egp33Rec" title="REC">● REC</button><button id="egp29Undo" title="Undo · ⌘Z" disabled>↶ Undo</button><button id="egp29Redo" title="Redo · ⇧⌘Z" disabled>↷ Redo</button><span id="egp29Time">00:00.000</span></div><div id="egp33Tools" class="egp33tools"><button id="egp33Quant" type="button">Cuantizar ▾</button><select id="egp33Figures" aria-label="Figura" hidden><option value="1">♩ Negra</option><option value="0.5">♫ Corchea</option><option value="0.25">♬ Semicorchea</option><option value="2">𝅗𝅥 Blanca</option><option value="4">𝅝 Redonda</option><option value="0">Libre</option></select><span id="egp33Colors"></span></div><div id="egp29Area" class="egp29trackarea" tabindex="0"><canvas id="egp29Canvas"></canvas></div><div id="egp29Scroll" class="egp29scroll"><div id="egp29ScrollContent"></div></div>`;
 const center=stage.querySelector('.center');if(!center)return;
 center.append(root);
+
+let cutMode=false;
+const cutButton=document.createElement('button');
+cutButton.id='egp36Cut';
+cutButton.type='button';
+cutButton.textContent='✂ Cortar';
+cutButton.title='C = herramienta de corte; V = selección';
+el('egp29Redo').after(cutButton);
+
+cutButton.onclick=()=>{
+ cutMode=!cutMode;
+ cutButton.classList.toggle('active',cutMode);
+ cutButton.style.background=cutMode?'#af6124':'';
+ area.style.cursor=cutMode?'crosshair':'';
+};
+
+function egp36Split(index,time){
+ const n=notes[index];
+ if(!n)return;
+
+ const split=Math.round(time*4)/4;
+ const end=n.t+n.d;
+
+ if(split<=n.t+.05||split>=end-.05)return;
+
+ commit();
+
+ const right={...n,t:split,d:end-split};
+ n.d=split-n.t;
+ notes.splice(index+1,0,right);
+
+ selected.clear();
+ selected.add(index+1);
+ syncEditor();
+ draw();
+}
+
+function egp36Geometry(){
+ const height=getH();
+ const bottom=Math.min(
+  height-85,
+  29+Math.max(75,(height-29)*.55)
+ );
+ const count=Math.max(1,lightCount());
+ return {
+  bottom,
+  laneHeight:(height-bottom-1)/count
+ };
+}
+
+function egp36LineY(n){
+ const g=egp36Geometry();
+ const top=g.bottom+1+n.lane*g.laneHeight;
+ const inset=Math.min(4,g.laneHeight*.15);
+ const hh=Math.max(
+  3,g.laneHeight-Math.min(8,g.laneHeight*.3)
+ );
+ const level=clamp(Number(n.level??100),0,100);
+ return top+inset+4+
+        (1-level/100)*Math.max(1,hh-8);
+}
+
+function egp36SetLevel(n,y){
+ const g=egp36Geometry();
+ const top=g.bottom+1+n.lane*g.laneHeight;
+ const inset=Math.min(4,g.laneHeight*.15);
+ const hh=Math.max(
+  3,g.laneHeight-Math.min(8,g.laneHeight*.3)
+ );
+ const ratio=1-(y-top-inset-4)/
+                 Math.max(1,hh-8);
+ n.level=Math.round(clamp(ratio*100,0,100));
+}
+
 const area=el('egp29Area'),canvas=el('egp29Canvas'),ctx=canvas.getContext('2d'),scr=el('egp29Scroll');
 let audio=null,loadingAudio=false,peakMin=null,peakMax=null,peakStep=64,seconds=180,pxs=85,origin=0,playSec=0,raf=null,notes=[],past=[],future=[],selected=new Set(),recArmed=false,recFrom=-1,drag=null,prevText='',lastFrame=performance.now();
 const gutter=84;const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -96,6 +170,50 @@ ctx.font='11px ui-monospace,SFMono-Regular,Menlo,monospace';ctx.textBaseline='mi
 ctx.strokeStyle='#41536a';ctx.beginPath();ctx.moveTo(0,audioBottom+.5);ctx.lineTo(w,audioBottom+.5);ctx.stroke();
 if(peakMin&&audio){const cy=(audioTop+audioBottom)/2,amp=(audioBottom-audioTop)*.43;ctx.fillStyle='#58b6ef';ctx.beginPath();let started=false;const count=peakMin.length;for(let x=Math.round(gutter);x<w;x++){const ta=origin+(x-gutter)/pxs,tb=origin+(x+1-gutter)/pxs;let a=clamp(Math.floor(ta*audio.sampleRate/peakStep),0,count-1),b=clamp(Math.ceil(tb*audio.sampleRate/peakStep),a+1,count);let mn=1,mx=-1;for(let j=a;j<b;j++){mn=Math.min(mn,peakMin[j]);mx=Math.max(mx,peakMax[j])}if(!started){ctx.moveTo(x,cy-mx*amp);started=true}else ctx.lineTo(x,cy-mx*amp)}for(let x=Math.round(w-1);x>=gutter;x--){const ta=origin+(x-gutter)/pxs,tb=origin+(x+1-gutter)/pxs;let a=clamp(Math.floor(ta*audio.sampleRate/peakStep),0,count-1),b=clamp(Math.ceil(tb*audio.sampleRate/peakStep),a+1,count);let mn=1;for(let j=a;j<b;j++)mn=Math.min(mn,peakMin[j]);ctx.lineTo(x,cy-mn*amp)}ctx.closePath();ctx.fill()}else{ctx.strokeStyle='#40627c';ctx.beginPath();ctx.moveTo(gutter,(audioTop+audioBottom)/2);ctx.lineTo(w,(audioTop+audioBottom)/2);ctx.stroke()}
 notes.forEach((n,i)=>{const x=gutter+(n.t-origin)*pxs,ww=n.d*pxs;if(x+ww<gutter||x>w||lights<1)return;const lane=clamp(n.lane||0,0,lights-1),y=midiTop+lane*laneH+Math.min(4,laneH*.15),hh=Math.max(3,laneH-Math.min(8,laneH*.3));ctx.fillStyle=n.color||'#27b89c';ctx.fillRect(Math.max(gutter,x),y,Math.min(w,x+ww)-Math.max(gutter,x),hh);ctx.strokeStyle=selected.has(i)?'#ffffff':'#70ddc9';ctx.lineWidth=selected.has(i)?2:1;ctx.strokeRect(Math.max(gutter,x)+.5,y+.5,Math.max(1,Math.min(w,x+ww)-Math.max(gutter,x))-1,Math.max(1,hh-1));});
+
+// V0.36 — línea de intensidad por región.
+notes.forEach((n,i)=>{
+ const x=gutter+(n.t-origin)*pxs;
+ const right=x+n.d*pxs;
+ if(right<gutter||x>w)return;
+
+ const y=egp36LineY(n);
+ const a=Math.max(gutter,x);
+ const b=Math.min(w,right);
+
+ if(b<=a)return;
+
+ ctx.save();
+ ctx.beginPath();
+ ctx.rect(a,0,b-a,h);
+ ctx.clip();
+
+ ctx.strokeStyle='#ffffff';
+ ctx.globalAlpha=.92;
+ ctx.lineWidth=selected.has(i)?2.5:1.6;
+ ctx.beginPath();
+ ctx.moveTo(a,y);
+ ctx.lineTo(b,y);
+ ctx.stroke();
+
+ if(selected.has(i)&&b-a>35){
+  ctx.fillStyle='#ffffff';
+  ctx.beginPath();
+  ctx.arc((a+b)/2,y,3.5,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.font='bold 10px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillStyle='#ffffff';
+  ctx.fillText(
+   Math.round(clamp(n.level??100,0,100))+'%',
+   (a+b)/2,
+   Math.min(getH()-3,y+13)
+  );
+ }
+ ctx.restore();
+});
+
 const cursor=gutter+(playSec-origin)*pxs;if(cursor>=gutter&&cursor<=w){ctx.strokeStyle='#fff3aa';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cursor+.5,0);ctx.lineTo(cursor+.5,h);ctx.stroke();ctx.fillStyle='#fff3aa';ctx.beginPath();ctx.moveTo(cursor-5,0);ctx.lineTo(cursor+5,0);ctx.lineTo(cursor,8);ctx.fill()}
 ctx.fillStyle='#101c2d';ctx.fillRect(0,0,gutter,h);ctx.strokeStyle='#3d5069';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(gutter+.5,0);ctx.lineTo(gutter+.5,h);ctx.stroke();ctx.fillStyle='#9bb4ce';ctx.font='650 11px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.fillText('AUDIO',11,(audioTop+audioBottom)/2);for(let k=0;k<lights;k++){if(laneH>=13)ctx.fillText('LUZ '+(k+1),11,midiTop+(k+.5)*laneH);}ctx.fillStyle='#172b40';ctx.fillRect(0,0,gutter,top);ctx.fillStyle='#8fc7cc';ctx.fillText('TIEMPO',9,15);
 }
@@ -142,12 +260,304 @@ let audioCtx=null;async function decodeFile(file){if(!file||loadingAudio)return;
 const fileInput=el('egpShowFile');if(fileInput)fileInput.addEventListener('change',()=>decodeFile(fileInput.files?.[0]));
 const ptrs=new Map();let multitouch=false,gesture=null;
 function point(e){const r=area.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
-area.addEventListener('pointerdown',e=>{area.focus({preventScroll:true});const p=point(e);ptrs.set(e.pointerId,p);area.setPointerCapture(e.pointerId);if(ptrs.size>=2){multitouch=true;drag=null;const [a,b]=[...ptrs.values()];gesture={gap:Math.hypot(a.x-b.x,a.y-b.y)||1,mid:(a.x+b.x)/2,focus:hitTime((a.x+b.x)/2),initialPxs:pxs};return}if(p.x<gutter)return;if(e.shiftKey||e.button===1){drag={kind:'pan',x:p.x,origin};return}const h=getH(),mt=Math.min(h-85,29+Math.max(75,(h-29)*.55));if(p.y>mt){const nLights=lightCount();if(nLights<1)return;const hit=findNote(p),multi=e.metaKey||e.ctrlKey||e.shiftKey;if(hit>=0){choose(hit,multi);drag=null;return}if(multi){choose(-1,true);return}const t=snap(hitTime(p.x)),lane=clamp(Math.floor((p.y-mt)/((getH()-mt)/nLights)),0,nLights-1);if(recArmed){recordTouch(lane);return}commit();notes.push({t,d:.5,lane,color:'#27b89c'});choose(notes.length-1,false);drag={kind:'note',idx:notes.length-1,t};draw()}else{drag={kind:'seek',x:p.x};nativeSeek(hitTime(p.x))}});
-area.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,point(e));const p=point(e);if(ptrs.size>=2&&gesture){const [a,b]=[...ptrs.values()],gap=Math.hypot(a.x-b.x,a.y-b.y)||1,mid=(a.x+b.x)/2;pxs=clamp(gesture.initialPxs*gap/gesture.gap,3,1600);origin=gesture.focus-(mid-gutter)/pxs;limit();scrollSync();draw();return}if(!drag||multitouch)return;if(drag.kind==='pan'){origin=drag.origin+(drag.x-p.x)/pxs;limit();scrollSync();draw()}else if(drag.kind==='note'){const n=notes[drag.idx];if(n){let end=snap(hitTime(p.x));n.t=Math.min(drag.t,end);n.d=Math.max(.25,Math.abs(end-drag.t));draw()}}else if(drag.kind==='seek')nativeSeek(hitTime(p.x))});
-const release=e=>{ptrs.delete(e.pointerId);if(!ptrs.size){gesture=null;multitouch=false;drag=null}else if(ptrs.size===1){gesture=null;drag=null}};area.addEventListener('pointerup',release);area.addEventListener('pointercancel',release);
+
+function egp36Hit(p){
+ const i=findNote(p);
+ if(i<0)return null;
+ const n=notes[i];
+ const x=gutter+(n.t-origin)*pxs;
+ const right=x+n.d*pxs;
+ const edge=Math.min(10,Math.max(4,(right-x)*.18));
+
+ let kind='move';
+
+ if(Math.abs(p.x-x)<=edge)kind='left';
+ else if(Math.abs(p.x-right)<=edge)kind='right';
+ else if(Math.abs(p.y-egp36LineY(n))<=7)
+  kind='level';
+
+ return {i,kind};
+}
+
+area.addEventListener('pointerdown',e=>{
+ area.focus({preventScroll:true});
+ const p=point(e);
+ ptrs.set(e.pointerId,p);
+ area.setPointerCapture(e.pointerId);
+
+ if(ptrs.size>=2){
+  multitouch=true;
+  drag=null;
+  const [a,b]=[...ptrs.values()];
+  gesture={
+   gap:Math.hypot(a.x-b.x,a.y-b.y)||1,
+   mid:(a.x+b.x)/2,
+   focus:hitTime((a.x+b.x)/2),
+   initialPxs:pxs
+  };
+  return;
+ }
+
+ if(p.x<gutter)return;
+
+ if(e.shiftKey&&e.button===1){
+  drag={kind:'pan',x:p.x,origin};
+  return;
+ }
+
+ const g=egp36Geometry();
+
+ if(p.y<=g.bottom){
+  drag={kind:'seek'};
+  nativeSeek(hitTime(p.x));
+  return;
+ }
+
+ const hit=egp36Hit(p);
+ const multi=e.metaKey||e.ctrlKey||e.shiftKey;
+
+ if(cutMode){
+  if(hit)egp36Split(hit.i,hitTime(p.x));
+  return;
+ }
+
+ if(hit){
+  let i=hit.i;
+
+  if(multi&&!e.altKey){
+   choose(i,true);
+   return;
+  }
+
+  const already=selected.has(i);
+
+  if(!already)choose(i,false);
+
+  if(e.altKey){
+   commit();
+
+   const indices=[...selected].sort((a,b)=>a-b);
+   const copies=indices.map(j=>({...notes[j]}));
+   const first=notes.length;
+
+   notes.push(...copies);
+   selected.clear();
+
+   for(let j=0;j<copies.length;j++)
+    selected.add(first+j);
+
+   i=first+indices.indexOf(hit.i);
+  }else{
+   commit();
+  }
+
+  const indices=[...selected];
+  const originals=indices.map(j=>({
+   index:j,
+   t:notes[j].t,
+   d:notes[j].d,
+   lane:notes[j].lane
+  }));
+
+  drag={
+   kind:hit.kind,
+   index:i,
+   x:p.x,
+   y:p.y,
+   originals
+  };
+
+  if(hit.kind==='level'){
+   egp36SetLevel(notes[i],p.y);
+   draw();
+  }
+  return;
+ }
+
+ if(multi){
+  choose(-1,true);
+  return;
+ }
+
+ commit();
+
+ const t=snap(hitTime(p.x));
+ const lane=clamp(
+  Math.floor((p.y-g.bottom-1)/g.laneHeight),
+  0,
+  Math.max(0,lightCount()-1)
+ );
+
+ if(recArmed){
+  recordTouch(lane);
+  return;
+ }
+
+ notes.push({
+  t,d:.5,lane,
+  color:'#27b89c',
+  level:100
+ });
+
+ choose(notes.length-1,false);
+ drag={kind:'create',index:notes.length-1,t};
+ draw();
+});
+
+area.addEventListener('pointermove',e=>{
+ const p=point(e);
+
+ if(!ptrs.has(e.pointerId)){
+  if(cutMode){
+   area.style.cursor='crosshair';
+  }else{
+   const hit=egp36Hit(p);
+   area.style.cursor=!hit?'crosshair':
+    hit.kind==='level'?'ns-resize':
+    hit.kind==='move'?'grab':'ew-resize';
+  }
+  return;
+ }
+
+ ptrs.set(e.pointerId,p);
+
+ if(ptrs.size>=2&&gesture){
+  const [a,b]=[...ptrs.values()];
+  const gap=Math.hypot(a.x-b.x,a.y-b.y)||1;
+  const mid=(a.x+b.x)/2;
+
+  pxs=clamp(
+   gesture.initialPxs*gap/gesture.gap,
+   3,1600
+  );
+
+  origin=gesture.focus-(mid-gutter)/pxs;
+  limit();scrollSync();draw();
+  return;
+ }
+
+ if(!drag||multitouch)return;
+
+ const n=notes[drag.index];
+ const delta=snap((p.x-drag.x)/pxs);
+
+ if(drag.kind==='pan'){
+  origin=drag.origin+(drag.x-p.x)/pxs;
+  limit();scrollSync();draw();
+  return;
+ }
+
+ if(drag.kind==='seek'){
+  nativeSeek(hitTime(p.x));
+  return;
+ }
+
+ if(drag.kind==='create'){
+  if(!n)return;
+  const finish=snap(hitTime(p.x));
+  n.t=Math.min(drag.t,finish);
+  n.d=Math.max(.25,Math.abs(finish-drag.t));
+  draw();
+  return;
+ }
+
+ if(!n)return;
+
+ if(drag.kind==='level'){
+  egp36SetLevel(n,p.y);
+  draw();
+  return;
+ }
+
+ if(drag.kind==='left'){
+  const o=drag.originals.find(x=>x.index===drag.index);
+  if(!o)return;
+  const finish=o.t+o.d;
+  n.t=clamp(o.t+delta,0,finish-.25);
+  n.d=finish-n.t;
+ }
+
+ if(drag.kind==='right'){
+  const o=drag.originals.find(x=>x.index===drag.index);
+  if(!o)return;
+  n.d=clamp(o.d+delta,.25,seconds-o.t);
+ }
+
+ if(drag.kind==='move'){
+  const earliest=Math.min(
+   ...drag.originals.map(x=>x.t)
+  );
+  const latest=Math.max(
+   ...drag.originals.map(x=>x.t+x.d)
+  );
+
+  const safeDelta=clamp(
+   delta,-earliest,seconds-latest
+  );
+
+  const g=egp36Geometry();
+  const laneDelta=Math.round(
+   (p.y-drag.y)/g.laneHeight
+  );
+
+  const minLane=Math.min(
+   ...drag.originals.map(x=>x.lane)
+  );
+  const maxLane=Math.max(
+   ...drag.originals.map(x=>x.lane)
+  );
+
+  const safeLane=clamp(
+   laneDelta,-minLane,
+   lightCount()-1-maxLane
+  );
+
+  for(const o of drag.originals){
+   const item=notes[o.index];
+   if(!item)continue;
+   item.t=o.t+safeDelta;
+   item.lane=o.lane+safeLane;
+  }
+ }
+
+ draw();
+});
+
+const egp36Release=e=>{
+ ptrs.delete(e.pointerId);
+
+ if(!ptrs.size){
+  gesture=null;
+  multitouch=false;
+  drag=null;
+ }else if(ptrs.size===1){
+  gesture=null;
+  drag=null;
+ }
+};
+
+area.addEventListener('pointerup',egp36Release);
+area.addEventListener('pointercancel',egp36Release);
+
 area.addEventListener('wheel',e=>{if(!document.body.classList.contains('egp-show-mode'))return;e.preventDefault();const p=point(e);if(e.ctrlKey||e.metaKey){const factor=Math.exp(-e.deltaY*.012);const focus=hitTime(Math.max(gutter,p.x));pxs=clamp(pxs*factor,3,1600);origin=focus-(p.x-gutter)/pxs;limit();scrollSync();draw()}else{const dx=(Math.abs(e.deltaX)>1?e.deltaX:(e.shiftKey?e.deltaY:0));if(dx)pan(dx/pxs);else pan(e.deltaY/pxs)}},{passive:false});
 scr.addEventListener('scroll',()=>{if(!document.body.classList.contains('egp-show-mode'))return;origin=scr.scrollLeft/pxs;limit();draw()});
 area.addEventListener('dblclick',e=>{const p=point(e);if(p.y<30||p.y>getH()-35){const focus=hitTime(p.x);pxs=clamp(pxs*1.6,3,1600);origin=focus-(p.x-gutter)/pxs;limit();scrollSync();draw()}});
+document.addEventListener('keydown',e=>{
+ if(!document.body.classList.contains('egp-show-mode'))return;
+ if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||''))return;
+ if(e.metaKey||e.ctrlKey||e.altKey)return;
+ if(e.key.toLowerCase()==='c'&&!e.repeat){
+  cutMode=true;
+  cutButton.style.background='#af6124';
+  e.preventDefault();
+ }
+ if(e.key.toLowerCase()==='v'&&!e.repeat){
+  cutMode=false;
+  cutButton.style.background='';
+  e.preventDefault();
+ }
+},true);
+
 document.addEventListener('keydown',e=>{if(!document.body.classList.contains('egp-show-mode')||!root.isConnected)return;const tag=e.target?.tagName;if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag||''))return;if((e.key==='Backspace'||e.key==='Delete')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
  if(selected.size){
   e.preventDefault();
@@ -177,7 +587,8 @@ function egp35Preview(){
 
    if(current){
     lights[lane]={
-     color:current.color||'#27b89c'
+     color:current.color||'#27b89c',
+     level:clamp(Number(current.level??100),0,100)
     };
    }
   }
