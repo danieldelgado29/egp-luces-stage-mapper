@@ -712,10 +712,17 @@ function egp35Preview(){
     if(!current||n.t>=current.t)current=n;
    }
 
-   if(current){
-    lights[lane]={
+   // Si esta pista tiene bloques, los espacios vacíos
+   // representan oscuridad.
+   const hasClips=notes.some(n=>n.lane===lane);
+
+   if(hasClips){
+    lights[lane]=current?{
      color:current.color||'#27b89c',
      level:clamp(Number(current.level??100),0,100)
+    }:{
+     color:null,
+     level:0
     };
    }
   }
