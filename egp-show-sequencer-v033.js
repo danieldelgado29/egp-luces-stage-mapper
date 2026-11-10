@@ -723,7 +723,124 @@ function egp35Preview(){
 
  window.__EGP_SEQ_3D_V035={active,lights};
 }
-function tick(now){if(document.body.classList.contains('egp-show-mode')){let s=el('egpShowTime')?.textContent||'';const m=/^(\d+):(\d+)\.(\d+)/.exec(s.trim());if(m){const t=Number(m[1])*60+Number(m[2])+Number('0.'+m[3]);if(Number.isFinite(t)&&Math.abs(playSec-t)>.016){playSec=t;draw()}}egp35Preview();el('egp29Time').textContent=fmt(playSec);const nativeBtn=el('egpShowPlay');if(nativeBtn){const t=nativeBtn.textContent||'';el('egp29Play').textContent=/pausa|pause|❚❚|Ⅱ/i.test(t)?'Ⅱ Pausa':'▶ Play'}if(!audio&&fileInput?.files?.length)decodeFile(fileInput.files[0]);if(!lastFrame||now-lastFrame>800){lastFrame=now;draw()}}requestAnimationFrame(tick)}requestAnimationFrame(tick);
+
+// V0.38 — Grabación momentánea con ArrowDown.
+let egp38Hold=null;
+let egp38LastLane=0;
+let egp38LastColor='#27b89c';
+
+function egp38Start(){
+ if(egp38Hold || !recArmed)return;
+ if(!document.body.classList.contains('egp-show-mode'))return;
+ if(lightCount()<1)return;
+
+ // No crear regiones inmóviles si la canción está detenida.
+ const playButton=el('egp29Play');
+ if(!/pausa|pause|❚❚|Ⅱ/i.test(playButton?.textContent||'')){
+  return;
+ }
+
+ const index=[...selected].find(i=>notes[i]);
+ const previous=index===undefined?null:notes[index];
+
+ const lane=clamp(
+  previous?.lane??egp38LastLane,
+  0,lightCount()-1
+ );
+
+ const color=previous?.color||egp38LastColor;
+ const level=previous?.level??100;
+ const start=clamp(playSec,0,seconds);
+
+ commit();
+
+ notes.push({
+  t:start,
+  d:.001,
+  lane,
+  color,
+  level
+ });
+
+ const newIndex=notes.length-1;
+ egp38Hold={index:newIndex,start};
+
+ selected.clear();
+ selected.add(newIndex);
+ syncEditor();
+
+ egp38LastLane=lane;
+ egp38LastColor=color;
+ el('egp33Rec').textContent='● GRABANDO ↓';
+ draw();
+}
+
+function egp38Advance(){
+ if(!egp38Hold)return;
+
+ const n=notes[egp38Hold.index];
+ if(!n)return;
+
+ const end=clamp(playSec,egp38Hold.start,seconds);
+ n.d=Math.max(.001,end-egp38Hold.start);
+ draw();
+}
+
+function egp38End(){
+ if(!egp38Hold)return;
+
+ egp38Advance();
+
+ const n=notes[egp38Hold.index];
+
+ if(n){
+  n.d=Math.max(.01,n.d);
+  egp38LastLane=n.lane;
+  egp38LastColor=n.color;
+ }
+
+ egp38Hold=null;
+
+ el('egp33Rec').textContent=
+  recArmed?'● REC ON':'● REC';
+
+ draw();
+}
+
+document.addEventListener('keydown',e=>{
+ if(e.key!=='ArrowDown')return;
+ if(!document.body.classList.contains('egp-show-mode'))return;
+ if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||''))return;
+ if(e.metaKey||e.ctrlKey||e.altKey)return;
+
+ e.preventDefault();
+ e.stopImmediatePropagation();
+
+ if(!e.repeat)egp38Start();
+},true);
+
+document.addEventListener('keyup',e=>{
+ if(e.key!=='ArrowDown')return;
+ if(!egp38Hold)return;
+
+ e.preventDefault();
+ e.stopImmediatePropagation();
+ egp38End();
+},true);
+
+window.addEventListener('blur',egp38End);
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)egp38End();
+});
+
+el('egp29Stop')?.addEventListener(
+ 'click',egp38End,{capture:true}
+);
+el('egpExitShow')?.addEventListener(
+ 'click',egp38End,{capture:true}
+);
+
+function tick(now){if(document.body.classList.contains('egp-show-mode')){let s=el('egpShowTime')?.textContent||'';const m=/^(\d+):(\d+)\.(\d+)/.exec(s.trim());if(m){const t=Number(m[1])*60+Number(m[2])+Number('0.'+m[3]);if(Number.isFinite(t)&&Math.abs(playSec-t)>.016){playSec=t;draw()}}egp38Advance();egp35Preview();el('egp29Time').textContent=fmt(playSec);const nativeBtn=el('egpShowPlay');if(nativeBtn){const t=nativeBtn.textContent||'';el('egp29Play').textContent=/pausa|pause|❚❚|Ⅱ/i.test(t)?'Ⅱ Pausa':'▶ Play'}if(!audio&&fileInput?.files?.length)decodeFile(fileInput.files[0]);if(!lastFrame||now-lastFrame>800){lastFrame=now;draw()}}requestAnimationFrame(tick)}requestAnimationFrame(tick);
 const resizer=new ResizeObserver(()=>{limit();scrollSync();draw()});resizer.observe(area);
 
 
