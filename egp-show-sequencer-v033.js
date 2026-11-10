@@ -400,7 +400,7 @@ area.addEventListener('pointerdown',e=>{
  }
 
  const hit=egp36Hit(p);
- const multi=e.metaKey||e.ctrlKey||e.shiftKey;
+ const multi=e.metaKey||e.ctrlKey;
 
  if(cutMode){
   if(hit)egp36Split(hit.i,hitTime(p.x));
@@ -446,11 +446,12 @@ area.addEventListener('pointerdown',e=>{
   }));
 
   drag={
-   kind:hit.kind,
+   kind:e.altKey?'move':hit.kind,
    index:i,
    x:p.x,
    y:p.y,
-   originals
+   originals,
+   lockTime:e.shiftKey
   };
 
   if(hit.kind==='level'){
@@ -515,6 +516,7 @@ area.addEventListener('pointermove',e=>{
    const hit=egp36Hit(p);
    area.style.cursor=!hit?
     (egp37DrawMode?'crosshair':'default'):
+    e.altKey?'copy':
     hit.kind==='level'?'ns-resize':
     hit.kind==='move'?'grab':'ew-resize';
   }
@@ -609,9 +611,10 @@ area.addEventListener('pointermove',e=>{
    ...drag.originals.map(x=>x.t+x.d)
   );
 
-  const safeDelta=clamp(
-   delta,-earliest,seconds-latest
-  );
+  const safeDelta=
+   (drag.lockTime||e.shiftKey)
+   ?0
+   :clamp(delta,-earliest,seconds-latest);
 
   const g=egp36Geometry();
   const laneDelta=Math.round(
@@ -730,6 +733,49 @@ function egp35Preview(){
 
  window.__EGP_SEQ_3D_V035={active,lights};
 }
+
+
+// V0.40 — evaluación sincronizada de luces.
+window.__EGP_SEQ_GET_FRAME_V040=function(time){
+ const lights={};
+ const count=lightCount();
+
+ if(!document.body.classList.contains('egp-show-mode')){
+  return {active:false,lights};
+ }
+
+ const t=Number(time);
+ const position=Number.isFinite(t)?t:playSec;
+
+ for(let lane=0;lane<count;lane++){
+  let hasRegions=false;
+  let current=null;
+
+  for(const n of notes){
+   if(n.lane!==lane)continue;
+
+   hasRegions=true;
+
+   if(position>=n.t &&
+      position<n.t+n.d &&
+      (!current||n.t>=current.t)){
+    current=n;
+   }
+  }
+
+  if(!hasRegions)continue;
+
+  lights[lane]=current?{
+   color:current.color||'#27b89c',
+   level:clamp(Number(current.level??100),0,100)
+  }:{
+   color:null,
+   level:0
+  };
+ }
+
+ return {active:true,lights};
+};
 
 // V0.38 — Grabación momentánea con ArrowDown.
 let egp38Hold=null;

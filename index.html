@@ -1885,16 +1885,18 @@ function egpShowFixture(f){
   else{const choices={'Singer':['Cantante','Coros'],'Guitar':['Guitarra'],'Bass':['Bajo'],'Drums':['Batería','Percusión'],'Keys':['Piano','Teclado']};const t=scene.musicians.find(m=>(choices[st.target]||[]).includes(m.role));if(t)z.aimTarget=t.id;}
  }
 
- const preview=window.__EGP_SEQ_3D_V035;
+ const preview=
+  window.__EGP_SEQ_GET_FRAME_V040?.(egpShowTime);
  const lane=scene.fixtures.findIndex(x=>x.id===f.id);
 
  if(preview?.active&&lane>=0){
   const clip=preview.lights[lane];
+
   if(clip){
    if(clip.color)z.lightColor=clip.color;
-   z.intensity=clamp(
-    Number(clip.level??0),0,100
-   );
+   z.intensity=Math.max(0,Math.min(
+    100,Number(clip.level??0)
+   ));
   }
  }
  return z
@@ -2477,6 +2479,6 @@ try{const saved=localStorage.getItem(KEY);if(saved){scene=validate(JSON.parse(sa
 if(!scene)create('bar_small');$('touchMode').value='all';renderSavedShows();switchPage('home');const ro=new ResizeObserver(resize);ro.observe($('box'));requestAnimationFrame(resize);
 })();
 </script>
-<script src="egp-show-sequencer-v033.js?v=039" defer></script>
+<script src="egp-show-sequencer-v033.js?v=040" defer></script>
 </body>
 </html>
