@@ -171,6 +171,36 @@ ctx.strokeStyle='#41536a';ctx.beginPath();ctx.moveTo(0,audioBottom+.5);ctx.lineT
 if(peakMin&&audio){const cy=(audioTop+audioBottom)/2,amp=(audioBottom-audioTop)*.43;ctx.fillStyle='#58b6ef';ctx.beginPath();let started=false;const count=peakMin.length;for(let x=Math.round(gutter);x<w;x++){const ta=origin+(x-gutter)/pxs,tb=origin+(x+1-gutter)/pxs;let a=clamp(Math.floor(ta*audio.sampleRate/peakStep),0,count-1),b=clamp(Math.ceil(tb*audio.sampleRate/peakStep),a+1,count);let mn=1,mx=-1;for(let j=a;j<b;j++){mn=Math.min(mn,peakMin[j]);mx=Math.max(mx,peakMax[j])}if(!started){ctx.moveTo(x,cy-mx*amp);started=true}else ctx.lineTo(x,cy-mx*amp)}for(let x=Math.round(w-1);x>=gutter;x--){const ta=origin+(x-gutter)/pxs,tb=origin+(x+1-gutter)/pxs;let a=clamp(Math.floor(ta*audio.sampleRate/peakStep),0,count-1),b=clamp(Math.ceil(tb*audio.sampleRate/peakStep),a+1,count);let mn=1;for(let j=a;j<b;j++)mn=Math.min(mn,peakMin[j]);ctx.lineTo(x,cy-mn*amp)}ctx.closePath();ctx.fill()}else{ctx.strokeStyle='#40627c';ctx.beginPath();ctx.moveTo(gutter,(audioTop+audioBottom)/2);ctx.lineTo(w,(audioTop+audioBottom)/2);ctx.stroke()}
 notes.forEach((n,i)=>{const x=gutter+(n.t-origin)*pxs,ww=n.d*pxs;if(x+ww<gutter||x>w||lights<1)return;const lane=clamp(n.lane||0,0,lights-1),y=midiTop+lane*laneH+Math.min(4,laneH*.15),hh=Math.max(3,laneH-Math.min(8,laneH*.3));ctx.fillStyle=n.color||'#27b89c';ctx.fillRect(Math.max(gutter,x),y,Math.min(w,x+ww)-Math.max(gutter,x),hh);ctx.strokeStyle=selected.has(i)?'#ffffff':'#70ddc9';ctx.lineWidth=selected.has(i)?2:1;ctx.strokeRect(Math.max(gutter,x)+.5,y+.5,Math.max(1,Math.min(w,x+ww)-Math.max(gutter,x))-1,Math.max(1,hh-1));});
 
+
+// V0.37 — tiradores de inicio y final.
+notes.forEach((n,i)=>{
+ if(!selected.has(i))return;
+
+ const g=egp36Geometry();
+ const x=gutter+(n.t-origin)*pxs;
+ const right=x+n.d*pxs;
+ const top=g.bottom+1+n.lane*g.laneHeight;
+ const bottom=top+g.laneHeight;
+
+ ctx.save();
+ ctx.strokeStyle='#ffffff';
+ ctx.lineWidth=2.5;
+
+ for(const edge of [x,right]){
+  if(edge<gutter||edge>getW())continue;
+
+  ctx.beginPath();
+  ctx.moveTo(edge,top+3);
+  ctx.lineTo(edge,bottom-3);
+  ctx.stroke();
+
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(edge-3,top+3,6,7);
+  ctx.fillRect(edge-3,bottom-10,6,7);
+ }
+ ctx.restore();
+});
+
 // V0.36 — línea de intensidad por región.
 notes.forEach((n,i)=>{
  const x=gutter+(n.t-origin)*pxs;
@@ -213,6 +243,24 @@ notes.forEach((n,i)=>{
  }
  ctx.restore();
 });
+
+
+// V0.37 — recuadro de selección estilo DAW.
+if(drag?.kind==='marquee'){
+ const x=Math.min(drag.x1,drag.x2);
+ const y=Math.min(drag.y1,drag.y2);
+ const ww=Math.abs(drag.x2-drag.x1);
+ const hh=Math.abs(drag.y2-drag.y1);
+
+ ctx.save();
+ ctx.fillStyle='rgba(76,168,255,.14)';
+ ctx.strokeStyle='#79bdff';
+ ctx.lineWidth=1.5;
+ ctx.setLineDash([5,3]);
+ ctx.fillRect(x,y,ww,hh);
+ ctx.strokeRect(x,y,ww,hh);
+ ctx.restore();
+}
 
 const cursor=gutter+(playSec-origin)*pxs;if(cursor>=gutter&&cursor<=w){ctx.strokeStyle='#fff3aa';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cursor+.5,0);ctx.lineTo(cursor+.5,h);ctx.stroke();ctx.fillStyle='#fff3aa';ctx.beginPath();ctx.moveTo(cursor-5,0);ctx.lineTo(cursor+5,0);ctx.lineTo(cursor,8);ctx.fill()}
 ctx.fillStyle='#101c2d';ctx.fillRect(0,0,gutter,h);ctx.strokeStyle='#3d5069';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(gutter+.5,0);ctx.lineTo(gutter+.5,h);ctx.stroke();ctx.fillStyle='#9bb4ce';ctx.font='650 11px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';ctx.fillText('AUDIO',11,(audioTop+audioBottom)/2);for(let k=0;k<lights;k++){if(laneH>=13)ctx.fillText('LUZ '+(k+1),11,midiTop+(k+.5)*laneH);}ctx.fillStyle='#172b40';ctx.fillRect(0,0,gutter,top);ctx.fillStyle='#8fc7cc';ctx.fillText('TIEMPO',9,15);
@@ -261,13 +309,51 @@ const fileInput=el('egpShowFile');if(fileInput)fileInput.addEventListener('chang
 const ptrs=new Map();let multitouch=false,gesture=null;
 function point(e){const r=area.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 
+
+// V0.37 — herramienta Dibujar y selección por recuadro.
+let egp37DrawMode=false;
+
+const egp37DrawButton=document.createElement('button');
+egp37DrawButton.id='egp37Draw';
+egp37DrawButton.type='button';
+egp37DrawButton.textContent='✎ Dibujar';
+egp37DrawButton.title='D = dibujar · V = seleccionar';
+
+cutButton.after(egp37DrawButton);
+
+egp37DrawButton.onclick=()=>{
+ egp37DrawMode=!egp37DrawMode;
+ cutMode=false;
+ cutButton.style.background='';
+ egp37DrawButton.style.background=
+  egp37DrawMode?'#176b62':'';
+};
+
+function egp37MarqueeContains(n,box){
+ const g=egp36Geometry();
+
+ const x1=gutter+(n.t-origin)*pxs;
+ const x2=x1+n.d*pxs;
+
+ const y1=g.bottom+1+n.lane*g.laneHeight;
+ const y2=y1+g.laneHeight;
+
+ const left=Math.min(box.x1,box.x2);
+ const right=Math.max(box.x1,box.x2);
+ const top=Math.min(box.y1,box.y2);
+ const bottom=Math.max(box.y1,box.y2);
+
+ return x2>=left&&x1<=right&&
+        y2>=top&&y1<=bottom;
+}
+
 function egp36Hit(p){
  const i=findNote(p);
  if(i<0)return null;
  const n=notes[i];
  const x=gutter+(n.t-origin)*pxs;
  const right=x+n.d*pxs;
- const edge=Math.min(10,Math.max(4,(right-x)*.18));
+ const edge=Math.min(12,Math.max(5,(right-x)*.28));
 
  let kind='move';
 
@@ -374,14 +460,29 @@ area.addEventListener('pointerdown',e=>{
   return;
  }
 
- if(multi){
-  choose(-1,true);
+ if(!egp37DrawMode){
+  const base=e.metaKey||e.ctrlKey||e.shiftKey
+   ?new Set(selected):new Set();
+
+  selected=new Set(base);
+
+  drag={
+   kind:'marquee',
+   x1:p.x,
+   y1:p.y,
+   x2:p.x,
+   y2:p.y,
+   base
+  };
+
+  syncEditor();
+  draw();
   return;
  }
 
  commit();
 
- const t=snap(hitTime(p.x));
+ const t=hitTime(p.x);
  const lane=clamp(
   Math.floor((p.y-g.bottom-1)/g.laneHeight),
   0,
@@ -412,7 +513,8 @@ area.addEventListener('pointermove',e=>{
    area.style.cursor='crosshair';
   }else{
    const hit=egp36Hit(p);
-   area.style.cursor=!hit?'crosshair':
+   area.style.cursor=!hit?
+    (egp37DrawMode?'crosshair':'default'):
     hit.kind==='level'?'ns-resize':
     hit.kind==='move'?'grab':'ew-resize';
   }
@@ -438,8 +540,24 @@ area.addEventListener('pointermove',e=>{
 
  if(!drag||multitouch)return;
 
- const n=notes[drag.index];
- const delta=snap((p.x-drag.x)/pxs);
+ if(drag?.kind==='marquee'){
+  drag.x2=p.x;
+  drag.y2=p.y;
+
+  selected=new Set(drag.base);
+
+  notes.forEach((note,i)=>{
+   if(egp37MarqueeContains(note,drag))
+    selected.add(i);
+  });
+
+  syncEditor();
+  draw();
+  return;
+ }
+
+ const n=notes[drag?.index];
+ const delta=drag?(p.x-drag.x)/pxs:0;
 
  if(drag.kind==='pan'){
   origin=drag.origin+(drag.x-p.x)/pxs;
@@ -454,9 +572,9 @@ area.addEventListener('pointermove',e=>{
 
  if(drag.kind==='create'){
   if(!n)return;
-  const finish=snap(hitTime(p.x));
+  const finish=hitTime(p.x);
   n.t=Math.min(drag.t,finish);
-  n.d=Math.max(.25,Math.abs(finish-drag.t));
+  n.d=Math.max(.03,Math.abs(finish-drag.t));
   draw();
   return;
  }
@@ -473,14 +591,14 @@ area.addEventListener('pointermove',e=>{
   const o=drag.originals.find(x=>x.index===drag.index);
   if(!o)return;
   const finish=o.t+o.d;
-  n.t=clamp(o.t+delta,0,finish-.25);
+  n.t=clamp(o.t+delta,0,finish-.03);
   n.d=finish-n.t;
  }
 
  if(drag.kind==='right'){
   const o=drag.originals.find(x=>x.index===drag.index);
   if(!o)return;
-  n.d=clamp(o.d+delta,.25,seconds-o.t);
+  n.d=clamp(o.d+delta,.03,seconds-o.t);
  }
 
  if(drag.kind==='move'){
@@ -553,7 +671,16 @@ document.addEventListener('keydown',e=>{
  }
  if(e.key.toLowerCase()==='v'&&!e.repeat){
   cutMode=false;
+  egp37DrawMode=false;
   cutButton.style.background='';
+  egp37DrawButton.style.background='';
+  e.preventDefault();
+ }
+ if(e.key.toLowerCase()==='d'&&!e.repeat){
+  cutMode=false;
+  egp37DrawMode=true;
+  cutButton.style.background='';
+  egp37DrawButton.style.background='#176b62';
   e.preventDefault();
  }
 },true);
