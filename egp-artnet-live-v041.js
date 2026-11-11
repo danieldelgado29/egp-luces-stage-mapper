@@ -2,7 +2,10 @@
 (()=>{
 'use strict';
 
-const API='http://127.0.0.1:8766';
+const API=(
+ location.port==='8767' &&
+ ['127.0.0.1','localhost'].includes(location.hostname)
+) ? '/api/dmx' : 'http://127.0.0.1:8766';
 const bar=document.querySelector('#egpSeq29 .egp29bar');
 
 if(!bar)return;
