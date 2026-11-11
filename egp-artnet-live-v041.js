@@ -83,6 +83,59 @@ mapping.title=
  'Las pistas adicionales son solo virtuales.';
 bar.append(mapping);
 
+
+// V0.52: asignación de pistas a los dos PAR físicos.
+let egp52Map=[0,1];
+
+try{
+ const stored=JSON.parse(
+  localStorage.getItem('EGP_DMX_PAR_MAP_V052')||'null'
+ );
+ if(Array.isArray(stored)&&stored.length===2)
+  egp52Map=stored.map(v=>
+   Math.max(0,Math.min(15,Number(v)||0))
+  );
+}catch(_){}
+
+const egp52Selectors=[];
+
+for(let par=0;par<2;par++){
+ const label=document.createElement('label');
+ label.style.cssText=
+  'display:flex;align-items:center;gap:3px;'+
+  'white-space:nowrap;font:10px system-ui';
+
+ label.textContent='PAR '+(par+1)+' ← ';
+
+ const select=document.createElement('select');
+
+ select.style.cssText=
+  'background:#19344c;color:white;'+
+  'border:1px solid #526a83;border-radius:5px;'+
+  'padding:3px;max-width:90px';
+
+ for(let lane=0;lane<16;lane++){
+  select.add(new Option('LUZ '+(lane+1),String(lane)));
+ }
+
+ select.value=String(egp52Map[par]);
+
+ select.onchange=()=>{
+  egp52Map[par]=Number(select.value);
+  localStorage.setItem(
+   'EGP_DMX_PAR_MAP_V052',
+   JSON.stringify(egp52Map)
+  );
+ };
+
+ egp52Selectors.push(select);
+ label.append(select);
+ bar.append(label);
+}
+
+bar.style.overflowX='auto';
+bar.style.flexWrap='nowrap';
+
 let armed=false;
 let busy=false;
 
@@ -164,7 +217,7 @@ function channels(){
  if(!frame?.active)return output;
 
  for(let lane=0;lane<2;lane++){
-  const values=color(frame.lights[lane]);
+  const values=color(frame.lights[egp52Map[lane]]);
 
   for(let i=0;i<4;i++){
    output[lane*4+i]=values[i];

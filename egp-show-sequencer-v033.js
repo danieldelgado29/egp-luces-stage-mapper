@@ -207,6 +207,31 @@ function egp36SetLevel(n,y){
 }
 
 const area=el('egp29Area'),canvas=el('egp29Canvas'),ctx=canvas.getContext('2d'),scr=el('egp29Scroll');
+
+// V0.52: scroll vertical dentro del canvas original.
+let egp52LanePx=64;
+
+area.style.overflowY='auto';
+area.style.overflowX='hidden';
+area.style.minHeight='0';
+area.style.scrollbarGutter='stable';
+
+canvas.style.width='100%';
+canvas.style.display='block';
+
+function egp52CanvasSize(){
+ const count=Math.max(1,lightCount());
+ const desired=Math.max(
+  area.clientHeight,
+  Math.ceil((29+count*egp52LanePx)/.74)
+ );
+
+ const height=Math.ceil(desired)+'px';
+
+ if(canvas.style.height!==height)
+  canvas.style.height=height;
+}
+
 let audio=null,loadingAudio=false,peakMin=null,peakMax=null,peakStep=64,seconds=180,pxs=85,origin=0,playSec=0,raf=null,notes=[],past=[],future=[],selected=new Set(),recArmed=false,recFrom=-1,drag=null,prevText='',lastFrame=performance.now();
 const gutter=84;const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const fmt=s=>{s=Math.max(0,s||0);const m=Math.floor(s/60),sec=Math.floor(s%60),ms=Math.floor((s-Math.floor(s))*1000);return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')+'.'+String(ms).padStart(3,'0')};
@@ -222,7 +247,7 @@ function lightCount(){
 
 function limit(){origin=clamp(origin,0,Math.max(0,seconds-visible()))}
 function scrollSync(){const total=Math.max(1,seconds*pxs);el('egp29ScrollContent').style.width=(total+gutter)+'px';if(Math.abs(scr.scrollLeft-origin*pxs)>2)scr.scrollLeft=origin*pxs;}
-function draw(){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const dpr=Math.min(2,devicePixelRatio||1),w=r.width,h=r.height;if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle='#0b1523';ctx.fillRect(0,0,w,h);
+function draw(){egp52CanvasSize();const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const dpr=Math.min(2,devicePixelRatio||1),w=r.width,h=r.height;if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle='#0b1523';ctx.fillRect(0,0,w,h);
 const top=29,audioTop=top,audioBottom=Math.min(h-150,top+Math.max(60,(h-top)*.26)),midiTop=audioBottom+1,midiBottom=h;
 const lights=lightCount();const laneH=(midiBottom-midiTop)/Math.max(1,lights);
 ctx.fillStyle='#112234';ctx.fillRect(0,0,w,top);ctx.fillStyle='#0b1e2a';ctx.fillRect(0,audioTop,w,audioBottom-audioTop);ctx.fillStyle='#11192b';ctx.fillRect(0,midiTop,w,midiBottom-midiTop);
@@ -508,7 +533,7 @@ egp48Apply.onclick=event=>{
 
   if(!Number.isFinite(requested))continue;
 
-  const duration=Math.max(.1,requested);
+  const duration=Math.max(.005,requested);
   note.d=Math.min(
    duration,Math.max(.001,seconds-note.t)
   );
@@ -592,6 +617,56 @@ root.insertBefore(egp42Panel,editor);
 const egp42Music=el('egp42Music');
 const egp42Click=el('egp42Click');
 const egp42Status=el('egp42Status');
+
+// Música y click se seleccionan en Configuración del show.
+egp42Music.closest('label').style.display='none';
+egp42Click.closest('label').style.display='none';
+
+// Controles independientes para alto de pista y zoom horizontal.
+const egp52HeightLabel=document.createElement('label');
+egp52HeightLabel.textContent='Alto pista ';
+
+const egp52Height=document.createElement('input');
+egp52Height.type='range';
+egp52Height.min='36';
+egp52Height.max='120';
+egp52Height.step='4';
+egp52Height.value=String(egp52LanePx);
+egp52Height.style.width='90px';
+egp52Height.title='Altura vertical de cada pista';
+
+egp52Height.oninput=()=>{
+ egp52LanePx=Number(egp52Height.value);
+ egp52CanvasSize();
+ draw();
+};
+
+egp52HeightLabel.append(egp52Height);
+
+const egp52ZoomLabel=document.createElement('label');
+egp52ZoomLabel.textContent='Zoom tiempo ';
+
+const egp52Zoom=document.createElement('input');
+egp52Zoom.type='range';
+egp52Zoom.min='3';
+egp52Zoom.max='800';
+egp52Zoom.step='1';
+egp52Zoom.value=String(Math.round(pxs));
+egp52Zoom.style.width='90px';
+egp52Zoom.title='Zoom horizontal de las regiones';
+
+egp52Zoom.oninput=()=>{
+ const centerTime=origin+visible()/2;
+ pxs=Number(egp52Zoom.value);
+ origin=centerTime-visible()/2;
+ limit();
+ scrollSync();
+ draw();
+};
+
+egp52ZoomLabel.append(egp52Zoom);
+egp42Panel.append(egp52HeightLabel,egp52ZoomLabel);
+
 
 el('egp42Snap').onchange=e=>{
  egp42SnapEnabled=e.target.checked;
@@ -780,7 +855,7 @@ egp42Click.addEventListener('change',async()=>{
 });
 
 const ptrs=new Map();let multitouch=false,gesture=null;
-function point(e){const r=area.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+function point(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 
 
 // V0.37 — herramienta Dibujar y selección por recuadro.
@@ -1245,7 +1320,20 @@ const egp36Release=e=>{
 area.addEventListener('pointerup',egp36Release);
 area.addEventListener('pointercancel',egp36Release);
 
-area.addEventListener('wheel',e=>{if(!document.body.classList.contains('egp-show-mode'))return;e.preventDefault();const p=point(e);if(e.ctrlKey||e.metaKey){const factor=Math.exp(-e.deltaY*.012);const focus=hitTime(Math.max(gutter,p.x));pxs=clamp(pxs*factor,3,1600);origin=focus-(p.x-gutter)/pxs;limit();scrollSync();draw()}else{const dx=(Math.abs(e.deltaX)>1?e.deltaX:(e.shiftKey?e.deltaY:0));if(dx)pan(dx/pxs);else pan(e.deltaY/pxs)}},{passive:false});
+area.addEventListener('wheel',e=>{
+ if(!document.body.classList.contains('egp-show-mode'))return;
+
+ if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey &&
+    Math.abs(e.deltaY)>Math.abs(e.deltaX) &&
+    canvas.getBoundingClientRect().height>
+    area.clientHeight+2){
+  e.preventDefault();
+  area.scrollTop+=e.deltaY;
+  return;
+ }
+
+ e.preventDefault();
+ const p=point(e);if(e.ctrlKey||e.metaKey){const factor=Math.exp(-e.deltaY*.012);const focus=hitTime(Math.max(gutter,p.x));pxs=clamp(pxs*factor,3,1600);origin=focus-(p.x-gutter)/pxs;limit();scrollSync();draw()}else{const dx=(Math.abs(e.deltaX)>1?e.deltaX:(e.shiftKey?e.deltaY:0));if(dx)pan(dx/pxs);else pan(e.deltaY/pxs)}},{passive:false});
 scr.addEventListener('scroll',()=>{if(!document.body.classList.contains('egp-show-mode'))return;origin=scr.scrollLeft/pxs;limit();draw()});
 area.addEventListener('dblclick',e=>{const p=point(e);if(p.y<30||p.y>getH()-35){const focus=hitTime(p.x);pxs=clamp(pxs*1.6,3,1600);origin=focus-(p.x-gutter)/pxs;limit();scrollSync();draw()}});
 document.addEventListener('keydown',e=>{
@@ -1498,6 +1586,21 @@ el('egpExitShow')?.addEventListener(
 );
 
 function tick(now){if(document.body.classList.contains('egp-show-mode')){let s=el('egpShowTime')?.textContent||'';const m=/^(\d+):(\d+)\.(\d+)/.exec(s.trim());if(m){const t=Number(m[1])*60+Number(m[2])+Number('0.'+m[3]);if(Number.isFinite(t)&&Math.abs(playSec-t)>.016){playSec=t;draw()}}egp38Advance();egp35Preview();el('egp29Time').textContent=fmt(playSec);const nativeBtn=el('egpShowPlay');if(nativeBtn){const t=nativeBtn.textContent||'';el('egp29Play').textContent=/pausa|pause|❚❚|Ⅱ/i.test(t)?'Ⅱ Pausa':'▶ Play'}if(!audio&&fileInput?.files?.length)decodeFile(fileInput.files[0]);if(!lastFrame||now-lastFrame>800){lastFrame=now;draw()}}requestAnimationFrame(tick)}requestAnimationFrame(tick);
+
+document.addEventListener('fullscreenchange',()=>{
+ requestAnimationFrame(()=>{
+  egp52CanvasSize();
+  draw();
+ });
+});
+
+window.addEventListener('resize',()=>{
+ requestAnimationFrame(()=>{
+  egp52CanvasSize();
+  draw();
+ });
+});
+
 const resizer=new ResizeObserver(()=>{limit();scrollSync();draw()});resizer.observe(area);
 
 
