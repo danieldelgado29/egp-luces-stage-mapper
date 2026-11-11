@@ -452,14 +452,39 @@ function egp48BeatDuration(t,division){
  );
 }
 
-egp48Apply.onclick=()=>{
- if(!selected.size){
-  egp48Status.textContent='Selecciona bloques';
+
+// V0.51 — conservar el grupo para aplicar duraciones
+// repetidamente, incluso si cambia el foco del menú.
+let egp51Batch=[];
+
+egp48Length.addEventListener('pointerdown',()=>{
+ if(selected.size){
+  egp51Batch=[...selected]
+   .map(i=>notes[i]).filter(Boolean);
+ }
+});
+
+egp48Apply.onclick=event=>{
+ event.preventDefault();
+ event.stopPropagation();
+
+ if(selected.size){
+  egp51Batch=[...selected]
+   .map(i=>notes[i]).filter(Boolean);
+ }
+
+ const targets=egp51Batch.filter(n=>notes.includes(n));
+
+ if(!targets.length){
+  egp48Status.textContent='Selecciona bloques primero';
   return;
  }
 
  const value=egp48Length.value;
- if(!value)return;
+ if(!value){
+  egp48Status.textContent='Elige una duración';
+  return;
+ }
 
  const [mode,num]=value.split(':');
  const amount=Number(num);
@@ -467,36 +492,43 @@ egp48Apply.onclick=()=>{
  if(!Number.isFinite(amount)||amount<=0)return;
 
  if(mode==='beat'&&egp42Beats.length<2){
-  egp48Status.textContent='Primero carga el click';
+  egp48Status.textContent='Carga el click primero';
   return;
  }
 
  commit();
 
- let minimum=Infinity;
+ let count=0;
+ let minMs=Infinity;
 
- for(const i of selected){
-  const n=notes[i];
-  if(!n)continue;
-
+ for(const note of targets){
   const requested=mode==='ms'
    ?amount/1000
-   :egp48BeatDuration(n.t,amount);
+   :egp48BeatDuration(note.t,amount);
 
-  if(requested===null)continue;
+  if(!Number.isFinite(requested))continue;
 
-  // 100 ms es el mínimo de prueba para los PAR físicos.
   const duration=Math.max(.1,requested);
-
-  n.d=Math.min(
-   duration,Math.max(.001,seconds-n.t)
+  note.d=Math.min(
+   duration,Math.max(.001,seconds-note.t)
   );
 
-  minimum=Math.min(minimum,n.d);
+  minMs=Math.min(minMs,note.d*1000);
+  count++;
  }
 
- egp48Status.textContent=Number.isFinite(minimum)
-  ?'Aplicado · mínimo '+Math.round(minimum*1000)+' ms'
+ // Restaurar la selección del mismo grupo.
+ selected.clear();
+
+ for(const note of targets){
+  const index=notes.indexOf(note);
+  if(index>=0)selected.add(index);
+ }
+
+ syncEditor();
+
+ egp48Status.textContent=count
+  ?`✓ ${count} bloques · ${Math.round(minMs)} ms · puedes repetir`
   :'Sin cambios';
 
  draw();
@@ -1253,7 +1285,21 @@ document.addEventListener('keydown',e=>{if(!document.body.classList.contains('eg
  }
  return;
 }
-if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo()}else if(e.key===' '&&!e.repeat){e.preventDefault();e.stopImmediatePropagation();nativePlay()}else if(e.key==='Escape'){el('egpExitShow')?.click()}},true);
+if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo()}else if(e.key===' '&&!e.repeat){e.preventDefault();e.stopImmediatePropagation();nativePlay()}else if(e.key==='Escape'){
+ e.preventDefault();
+ e.stopImmediatePropagation();
+ drag=null;
+ cutMode=false;
+ egp37DrawMode=false;
+ cutButton.style.background='';
+ egp37DrawButton.style.background='';
+ area.style.cursor='default';
+ canvas.style.cursor='default';
+ selected.clear();
+ egp51Batch=[];
+ syncEditor();
+ draw();
+}},true);
 
 // EGP V0.35 — estado de los clips activos.
 function egp35Preview(){

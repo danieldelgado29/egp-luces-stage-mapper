@@ -73,6 +73,16 @@ latencyBox.append(
 );
 bar.append(latencyBox);
 
+const mapping=document.createElement('span');
+mapping.textContent='DMX: LUZ 1–2';
+mapping.style.cssText=
+ 'font:10px system-ui;color:#a8bfd7;'+
+ 'white-space:nowrap';
+mapping.title=
+ 'LUZ 1 → d001; LUZ 2 → d005. '+
+ 'Las pistas adicionales son solo virtuales.';
+bar.append(mapping);
+
 let armed=false;
 let busy=false;
 
@@ -240,13 +250,22 @@ setInterval(async()=>{
  busy=true;
 
  try{
+  const output=channels();
+
   await send('/frame',{
-   channels:channels()
+   channels:output
   });
 
+  const nonzero=output.filter(v=>v>0).length;
+
   status.textContent=playing()
-   ?'DMX EN VIVO · +'+leadMs+' ms'
+   ?'DMX +'+leadMs+' ms · '+nonzero+'/8 canales'
    :'ARMADO · STOP';
+
+  status.title=
+   'PAR 1: LUZ 1, canales DMX 1–4. '+
+   'PAR 2: LUZ 2, canales DMX 5–8. '+
+   'LUZ 3–8 sin salida física configurada.';
 
  }catch(e){
   armed=false;
