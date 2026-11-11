@@ -11,6 +11,8 @@ const arm=document.createElement('button');
 const off=document.createElement('button');
 const status=document.createElement('span');
 
+arm.type='button';
+off.type='button';
 arm.textContent='DMX ARMAR';
 off.textContent='BLACKOUT';
 status.textContent='DMX OFF';
@@ -118,7 +120,10 @@ async function blackout(){
  }
 }
 
-arm.onclick=async()=>{
+arm.onclick=async(event)=>{
+ event.preventDefault();
+ event.stopPropagation();
+
  if(armed){
   await blackout();
   return;
@@ -140,10 +145,12 @@ arm.onclick=async()=>{
   status.textContent='ARMADO';
 
  }catch(e){
+  armed=false;
   status.textContent='SIN PUENTE';
-  alert(
-   'No se pudo conectar con el puente local Art-Net.'
-  );
+  status.style.color='#ffb778';
+  status.title='No se pudo conectar con '+API+
+   ' · '+String(e.message||e);
+  console.error('[EGP DMX ARMAR]',e);
  }finally{
   arm.disabled=false;
  }
