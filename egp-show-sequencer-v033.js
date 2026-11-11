@@ -1187,6 +1187,28 @@ audioPicker.innerHTML='<label for="egp32ConfigAudio">Canción · Audio</label><i
 const nameField=showTitle?.closest('.field');
 if(nameField&&!el('egp32ConfigAudio'))nameField.insertAdjacentElement('afterend',audioPicker);
 const configAudio=el('egp32ConfigAudio');
+
+// V0.43 — click separado en Nuevo show.
+const egp43ClickField=document.createElement('div');
+egp43ClickField.className='field egp43ClickField';
+egp43ClickField.innerHTML=
+ '<label for="egp43ConfigClick">Click · Grid</label>'+
+ '<input id="egp43ConfigClick" type="file" '+
+ 'accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg" '+
+ 'style="width:100%;max-width:100%;padding:10px;'+
+ 'border:1px solid #36546a;border-radius:8px;'+
+ 'background:#0a1928;color:#e9f8ff"/>';
+
+if(audioPicker.parentNode)
+ audioPicker.insertAdjacentElement('afterend',egp43ClickField);
+
+const configClick=el('egp43ConfigClick');
+let pendingClick=null;
+
+configClick?.addEventListener('change',()=>{
+ pendingClick=configClick.files?.[0]||null;
+});
+
 let pendingFile=null,loadedShow='',storeDB=null,lastLoadToken=0;
 function showKey(){return (el('showName')?.value||showTitle?.value||'').trim()}
 function openAudioDB(){
@@ -1230,18 +1252,40 @@ configAudio?.addEventListener('change',()=>{
  pendingFile=file;
 });
 configCreate?.addEventListener('click',()=>{
- const file=pendingFile;if(!file)return;
+ const file=pendingFile;
+ const click=pendingClick;
+ if(!file&&!click)return;
+
  const enteredTitle=showTitle?.value.trim()||'';
+
  setTimeout(async()=>{
   const actual=showKey();
-  // Si la creación fue rechazada, el nombre no habrá cambiado al esperado.
-  if(!actual||(enteredTitle&&actual!==enteredTitle))return;
+
+  if(!actual||
+     (enteredTitle&&actual!==enteredTitle))return;
+
   try{
-   await saveAudio(actual,file);
-   loadedShow=actual;
-   const ok=await loadToNative(file);
-   if(ok){pendingFile=null;configAudio.value=''}
-  }catch(e){console.error('[EGP Seq] Error guardando el audio local:',e);alert('No se pudo guardar la canción en este navegador.');}
+   if(file){
+    await saveAudio(actual,file);
+    loadedShow=actual;
+    const ok=await loadToNative(file);
+    if(ok){
+     pendingFile=null;
+     configAudio.value='';
+    }
+   }
+
+   if(click){
+    await saveAudio('CLICK::'+actual,click);
+    await egp42LoadClick(click);
+    pendingClick=null;
+    configClick.value='';
+   }
+
+  }catch(e){
+   console.error('[EGP] Error guardando audio o click',e);
+   alert('No se pudo guardar uno de los archivos.');
+  }
  },160);
 },false);
 async function restoreForCurrentShow(){
