@@ -172,6 +172,43 @@ if(peakMin&&audio){const cy=(audioTop+audioBottom)/2,amp=(audioBottom-audioTop)*
 notes.forEach((n,i)=>{const x=gutter+(n.t-origin)*pxs,ww=n.d*pxs;if(x+ww<gutter||x>w||lights<1)return;const lane=clamp(n.lane||0,0,lights-1),y=midiTop+lane*laneH+Math.min(4,laneH*.15),hh=Math.max(3,laneH-Math.min(8,laneH*.3));ctx.fillStyle=n.color||'#27b89c';ctx.fillRect(Math.max(gutter,x),y,Math.min(w,x+ww)-Math.max(gutter,x),hh);ctx.strokeStyle=selected.has(i)?'#ffffff':'#70ddc9';ctx.lineWidth=selected.has(i)?2:1;ctx.strokeRect(Math.max(gutter,x)+.5,y+.5,Math.max(1,Math.min(w,x+ww)-Math.max(gutter,x))-1,Math.max(1,hh-1));});
 
 
+
+// V0.42 — líneas de pulso sobre la línea de tiempo.
+if(egp42Beats.length>=2){
+ ctx.save();
+
+ const divisions=egp42Divisions;
+ const first=origin;
+ const last=origin+visible();
+
+ for(let k=0;k<egp42Beats.length-1;k++){
+  const a=egp42Beats[k];
+  const b=egp42Beats[k+1];
+
+  if(b<first||a>last)continue;
+
+  for(let d=0;d<divisions;d++){
+   const time=a+(b-a)*d/divisions;
+   const x=gutter+(time-origin)*pxs;
+
+   if(x<gutter||x>w)continue;
+
+   ctx.strokeStyle=d===0?
+    'rgba(252,190,93,.75)':
+    'rgba(252,190,93,.30)';
+
+   ctx.lineWidth=d===0?1.5:1;
+
+   ctx.beginPath();
+   ctx.moveTo(x,29);
+   ctx.lineTo(x,h);
+   ctx.stroke();
+  }
+ }
+
+ ctx.restore();
+}
+
 // V0.37 — tiradores de inicio y final.
 notes.forEach((n,i)=>{
  if(!selected.has(i))return;
@@ -306,6 +343,241 @@ function nativeStop(){el('egpShowStop')?.click();playSec=0;draw()}
 el('egp29Play').onclick=nativePlay;el('egp29Stop').onclick=nativeStop;el('egp29Undo').onclick=undo;el('egp29Redo').onclick=redo;
 let audioCtx=null;async function decodeFile(file){if(!file||loadingAudio)return;loadingAudio=true;try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();const raw=await file.arrayBuffer();const buffer=await audioCtx.decodeAudioData(raw);audio=buffer;seconds=buffer.duration;const count=Math.ceil(buffer.length/peakStep);peakMin=new Float32Array(count);peakMax=new Float32Array(count);const ch=buffer.getChannelData(0),ch2=buffer.numberOfChannels>1?buffer.getChannelData(1):null;let group=0,mn=1,mx=-1;for(let i=0;i<buffer.length;i++){const a=ch2?(ch[i]+ch2[i])*.5:ch[i];mn=Math.min(mn,a);mx=Math.max(mx,a);if(++group===peakStep||i===buffer.length-1){let k=Math.floor(i/peakStep);peakMin[k]=mn;peakMax[k]=mx;group=0;mn=1;mx=-1}}origin=0;playSec=0;pxs=Math.max(3,(getW()-gutter)/Math.max(1,seconds));scrollSync();draw();}catch(e){console.error('[EGP Seq] No se pudo decodificar el audio:',e)}finally{loadingAudio=false}}
 const fileInput=el('egpShowFile');if(fileInput)fileInput.addEventListener('change',()=>decodeFile(fileInput.files?.[0]));
+
+// EGP V0.42 — audio musical, click y grid magnético.
+let egp42Beats=[];
+let egp42SnapEnabled=true;
+let egp42Divisions=1;
+let egp42ClickName='';
+
+const egp42Panel=document.createElement('div');
+egp42Panel.id='egp42Panel';
+egp42Panel.style.cssText=`
+ flex:none;display:flex;align-items:center;gap:9px;
+ flex-wrap:wrap;padding:6px 12px;
+ background:#102237;border-bottom:1px solid #335069;
+ font:12px system-ui;color:#d8ebff;
+`;
+
+egp42Panel.innerHTML=`
+ <label style="cursor:pointer">
+  🎵 Audio
+  <input id="egp42Music" type="file"
+   accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg"
+   style="max-width:150px;font-size:10px">
+ </label>
+ <label style="cursor:pointer">
+  🥁 Click
+  <input id="egp42Click" type="file"
+   accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg"
+   style="max-width:150px;font-size:10px">
+ </label>
+ <label style="white-space:nowrap">
+  <input id="egp42Snap" type="checkbox" checked>
+  Snap click
+ </label>
+ <select id="egp42Division"
+  style="background:#19374f;color:#fff;border-radius:5px">
+  <option value="1">Pulso</option>
+  <option value="2">1/2 pulso</option>
+  <option value="4">1/4 pulso</option>
+ </select>
+ <span id="egp42Status"
+  style="color:#9ebed6">Sin click</span>
+`;
+
+root.insertBefore(egp42Panel,editor);
+
+const egp42Music=el('egp42Music');
+const egp42Click=el('egp42Click');
+const egp42Status=el('egp42Status');
+
+el('egp42Snap').onchange=e=>{
+ egp42SnapEnabled=e.target.checked;
+ draw();
+};
+
+el('egp42Division').onchange=e=>{
+ egp42Divisions=Number(e.target.value)||1;
+ draw();
+};
+
+function egp42Nearest(t){
+ if(!egp42SnapEnabled||egp42Beats.length<2)
+  return t;
+
+ const beats=egp42Beats;
+ let lo=0,hi=beats.length;
+
+ while(lo<hi){
+  const m=(lo+hi)>>1;
+  if(beats[m]<t)lo=m+1;
+  else hi=m;
+ }
+
+ const segment=Math.max(
+  0,Math.min(beats.length-2,lo-1)
+ );
+
+ const a=beats[segment];
+ const b=beats[segment+1];
+ const step=(b-a)/egp42Divisions;
+
+ if(step<=0)return t;
+
+ // Fuera de los pulsos detectados: extrapolar
+ // desde el tramo más cercano.
+ let snapped=a+Math.round((t-a)/step)*step;
+
+ if(lo===0){
+  const firstStep=(beats[1]-beats[0])/egp42Divisions;
+  snapped=beats[0]+
+   Math.round((t-beats[0])/firstStep)*firstStep;
+ }else if(lo>=beats.length){
+  const last=beats.length-1;
+  const lastStep=(beats[last]-beats[last-1])/
+   egp42Divisions;
+  snapped=beats[last]+
+   Math.round((t-beats[last])/lastStep)*lastStep;
+ }else{
+  const left=beats[lo-1];
+  const right=beats[lo];
+
+  const division=(right-left)/egp42Divisions;
+
+  snapped=left+
+   Math.round((t-left)/division)*division;
+ }
+
+ return clamp(snapped,0,seconds);
+}
+
+async function egp42LoadClick(file){
+ if(!file)return;
+
+ egp42Status.textContent='Analizando click...';
+
+ try{
+  if(!audioCtx)
+   audioCtx=new (
+    window.AudioContext||window.webkitAudioContext
+   )();
+
+  const data=await file.arrayBuffer();
+  const buffer=await audioCtx.decodeAudioData(data);
+
+  const sampleRate=buffer.sampleRate;
+  const step=Math.max(1,Math.floor(sampleRate*.005));
+  const count=Math.ceil(buffer.length/step);
+  const envelope=new Float32Array(count);
+
+  const channels=Array.from(
+   {length:buffer.numberOfChannels},
+   (_,i)=>buffer.getChannelData(i)
+  );
+
+  let max=0;
+
+  for(let i=0;i<count;i++){
+   const start=i*step;
+   const end=Math.min(buffer.length,start+step);
+   let peak=0;
+
+   for(let j=start;j<end;j++){
+    let value=0;
+    for(const ch of channels){
+     value=Math.max(value,Math.abs(ch[j]));
+    }
+    peak=Math.max(peak,value);
+   }
+
+   envelope[i]=peak;
+   max=Math.max(max,peak);
+  }
+
+  const threshold=Math.max(.006,max*.23);
+  const minDistance=.12;
+  const beats=[];
+  let last=-100;
+
+  for(let i=1;i<count-1;i++){
+   const value=envelope[i];
+   const t=i*step/sampleRate;
+
+   if(value<threshold||t-last<minDistance)
+    continue;
+
+   // Tomar el inicio del transiente y no
+   // cada muestra de su envolvente.
+   if(value>=envelope[i-1] ||
+      envelope[i-1]<threshold){
+    let onset=i;
+    while(onset>0 &&
+      envelope[onset-1]>=threshold*.45 &&
+      (i-onset)*step/sampleRate<.035){
+      onset--;
+    }
+    const onsetTime=onset*step/sampleRate;
+    if(onsetTime-last>=minDistance){
+     beats.push(onsetTime);
+     last=onsetTime;
+    }
+   }
+  }
+
+  if(beats.length<2){
+   throw Error(
+    'No se detectaron suficientes golpes. '+
+    'Usa un archivo con el click aislado.'
+   );
+  }
+
+  egp42Beats=beats;
+  egp42ClickName=file.name;
+
+  egp42Status.textContent=
+   `✓ ${beats.length} pulsos · ${file.name}`;
+
+  egp42Status.style.color='#75ebc4';
+
+  draw();
+
+ }catch(error){
+  egp42Beats=[];
+  egp42Status.textContent='Error: '+error.message;
+  egp42Status.style.color='#ff9c9c';
+  console.error('[EGP Click]',error);
+ }
+}
+
+egp42Music.addEventListener('change',async()=>{
+ const file=egp42Music.files?.[0];
+ if(!file)return;
+
+ const key=showKey();
+
+ try{
+  if(key)await saveAudio(key,file);
+  await loadToNative(file);
+ }catch(error){
+  alert('No se pudo cargar el audio: '+error.message);
+ }
+});
+
+egp42Click.addEventListener('change',async()=>{
+ const file=egp42Click.files?.[0];
+ if(!file)return;
+
+ const key=showKey();
+
+ try{
+  if(key)await saveAudio('CLICK::'+key,file);
+  await egp42LoadClick(file);
+ }catch(error){
+  alert('No se pudo guardar el click: '+error.message);
+ }
+});
+
 const ptrs=new Map();let multitouch=false,gesture=null;
 function point(e){const r=area.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 
@@ -483,7 +755,7 @@ area.addEventListener('pointerdown',e=>{
 
  commit();
 
- const t=hitTime(p.x);
+ const t=egp42Nearest(hitTime(p.x));
  const lane=clamp(
   Math.floor((p.y-g.bottom-1)/g.laneHeight),
   0,
@@ -574,7 +846,7 @@ area.addEventListener('pointermove',e=>{
 
  if(drag.kind==='create'){
   if(!n)return;
-  const finish=hitTime(p.x);
+  const finish=egp42Nearest(hitTime(p.x));
   n.t=Math.min(drag.t,finish);
   n.d=Math.max(.03,Math.abs(finish-drag.t));
   draw();
@@ -593,14 +865,14 @@ area.addEventListener('pointermove',e=>{
   const o=drag.originals.find(x=>x.index===drag.index);
   if(!o)return;
   const finish=o.t+o.d;
-  n.t=clamp(o.t+delta,0,finish-.03);
+  n.t=clamp(egp42Nearest(o.t+delta),0,finish-.03);
   n.d=finish-n.t;
  }
 
  if(drag.kind==='right'){
   const o=drag.originals.find(x=>x.index===drag.index);
   if(!o)return;
-  n.d=clamp(o.d+delta,.03,seconds-o.t);
+  n.d=clamp(egp42Nearest(o.t+o.d+delta)-o.t,.03,seconds-o.t);
  }
 
  if(drag.kind==='move'){
@@ -611,10 +883,19 @@ area.addEventListener('pointermove',e=>{
    ...drag.originals.map(x=>x.t+x.d)
   );
 
+  const reference=drag.originals.find(
+   x=>x.index===drag.index
+  )||drag.originals[0];
+
+  const targetDelta=egp42SnapEnabled &&
+    egp42Beats.length>=2
+   ?egp42Nearest(reference.t+delta)-reference.t
+   :delta;
+
   const safeDelta=
    (drag.lockTime||e.shiftKey)
    ?0
-   :clamp(delta,-earliest,seconds-latest);
+   :clamp(targetDelta,-earliest,seconds-latest);
 
   const g=egp36Geometry();
   const laneDelta=Math.round(
@@ -803,7 +1084,7 @@ function egp38Start(){
 
  const color=previous?.color||egp38LastColor;
  const level=previous?.level??100;
- const start=clamp(playSec,0,seconds);
+ const start=egp42Nearest(clamp(playSec,0,seconds));
 
  commit();
 
@@ -847,7 +1128,8 @@ function egp38End(){
  const n=notes[egp38Hold.index];
 
  if(n){
-  n.d=Math.max(.01,n.d);
+  const ending=egp42Nearest(n.t+n.d);
+  n.d=Math.max(.01,ending-n.t);
   egp38LastLane=n.lane;
   egp38LastColor=n.color;
  }
@@ -969,7 +1251,24 @@ async function restoreForCurrentShow(){
   const file=await readAudio(key);
   if(token!==lastLoadToken||showKey()!==key)return;
   if(file){loadedShow=key;await loadToNative(file)}
-  else if(loadedShow!==key){audio=null;peakMin=null;peakMax=null;draw()}
+  else if(loadedShow!==key){
+   audio=null;peakMin=null;peakMax=null;draw()
+  }
+
+  const clickFile=await readAudio('CLICK::'+key);
+
+  if(token!==lastLoadToken||showKey()!==key)return;
+
+  if(clickFile){
+   if(egp42ClickName!==clickFile.name ||
+      !egp42Beats.length)
+    await egp42LoadClick(clickFile);
+  }else{
+   egp42Beats=[];
+   egp42ClickName='';
+   egp42Status.textContent='Sin click';
+   draw();
+  }
  }catch(e){console.warn('[EGP Seq] No se pudo recuperar el audio local:',e)}
 }
 // Cada entrada al modo Show restaura el audio porque su propio motor puede
