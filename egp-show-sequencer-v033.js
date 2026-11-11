@@ -599,6 +599,9 @@ egp37DrawButton.onclick=()=>{
  cutButton.style.background='';
  egp37DrawButton.style.background=
   egp37DrawMode?'#176b62':'';
+ area.style.cursor=egp37DrawMode?
+  egp46PencilCursor:'default';
+ canvas.style.cursor=area.style.cursor;
 };
 
 function egp37MarqueeContains(n,box){
@@ -619,23 +622,86 @@ function egp37MarqueeContains(n,box){
         y2>=top&&y1<=bottom;
 }
 
+
+// V0.46 — cursores profesionales.
+const egp46SvgCursor=svg=>
+ 'url("data:image/svg+xml,'+
+ encodeURIComponent(svg)+
+ '") 16 16, auto';
+
+const egp46ResizeCursor=egp46SvgCursor(
+ '<svg xmlns="http://www.w3.org/2000/svg" '+
+ 'width="32" height="32" viewBox="0 0 32 32">'+
+ '<path d="M4 16 H28 M4 16 L10 10 M4 16 L10 22 '+
+ 'M28 16 L22 10 M28 16 L22 22" '+
+ 'stroke="white" stroke-width="4" fill="none"/>'+
+ '<path d="M4 16 H28 M4 16 L10 10 M4 16 L10 22 '+
+ 'M28 16 L22 10 M28 16 L22 22" '+
+ 'stroke="#101722" stroke-width="2" fill="none"/>'+
+ '</svg>'
+);
+
+const egp46PencilCursor=egp46SvgCursor(
+ '<svg xmlns="http://www.w3.org/2000/svg" '+
+ 'width="32" height="32" viewBox="0 0 32 32">'+
+ '<path d="M7 24 L9 17 L21 5 L27 11 L15 23 Z" '+
+ 'fill="#f5c767" stroke="#102030" stroke-width="2"/>'+
+ '<path d="M9 17 L15 23 M19 7 L25 13" '+
+ 'stroke="#102030" stroke-width="1.6"/>'+
+ '</svg>'
+);
+
+function egp46Cursor(p,e){
+ if(cutMode)return 'crosshair';
+ if(egp37DrawMode)return egp46PencilCursor;
+
+ const hit=egp36Hit(p);
+
+ if(!hit)return 'default';
+ if(e.altKey)return 'copy';
+
+ if(hit.kind==='left'||hit.kind==='right'){
+  return egp46ResizeCursor;
+ }
+
+ if(hit.kind==='level')return 'ns-resize';
+ return 'default';
+}
+
 function egp36Hit(p){
  const i=findNote(p);
  if(i<0)return null;
  const n=notes[i];
  const x=gutter+(n.t-origin)*pxs;
  const right=x+n.d*pxs;
- const edge=Math.min(12,Math.max(5,(right-x)*.28));
+ const edge=Math.min(11,Math.max(3,(right-x)/3));
 
  let kind='move';
 
- if(Math.abs(p.x-x)<=edge)kind='left';
- else if(Math.abs(p.x-right)<=edge)kind='right';
+ const dl=Math.abs(p.x-x);
+ const dr=Math.abs(p.x-right);
+
+ if(dl<=edge&&dl<=dr)kind='left';
+ else if(dr<=edge)kind='right';
  else if(Math.abs(p.y-egp36LineY(n))<=7)
   kind='level';
 
  return {i,kind};
 }
+
+
+area.addEventListener('pointerenter',e=>{
+ const p=point(e);
+ area.style.cursor=egp46Cursor(p,e);
+ canvas.style.cursor=area.style.cursor;
+});
+
+area.addEventListener('pointerleave',()=>{
+ if(!drag){
+  area.style.cursor='default';
+  canvas.style.cursor='default';
+ }
+});
 
 area.addEventListener('pointerdown',e=>{
  area.focus({preventScroll:true});
@@ -729,10 +795,14 @@ area.addEventListener('pointerdown',e=>{
    lockTime:e.shiftKey
   };
 
-  if(hit.kind==='level'){
+  if(hit.kind==='level'&&!e.altKey){
    egp36SetLevel(notes[i],p.y);
    draw();
   }
+
+  area.style.cursor=e.altKey
+   ?'copy':egp46Cursor(p,e);
+  canvas.style.cursor=area.style.cursor;
   return;
  }
 
@@ -785,16 +855,8 @@ area.addEventListener('pointermove',e=>{
  const p=point(e);
 
  if(!ptrs.has(e.pointerId)){
-  if(cutMode){
-   area.style.cursor='crosshair';
-  }else{
-   const hit=egp36Hit(p);
-   area.style.cursor=!hit?
-    (egp37DrawMode?'crosshair':'default'):
-    e.altKey?'copy':
-    hit.kind==='level'?'ns-resize':
-    hit.kind==='move'?'grab':'ew-resize';
-  }
+  area.style.cursor=egp46Cursor(p,e);
+  canvas.style.cursor=area.style.cursor;
   return;
  }
 
@@ -865,17 +927,52 @@ area.addEventListener('pointermove',e=>{
  }
 
  if(drag.kind==='left'){
-  const o=drag.originals.find(x=>x.index===drag.index);
-  if(!o)return;
-  const finish=o.t+o.d;
-  n.t=clamp(egp42Nearest(o.t+delta),0,finish-.03);
-  n.d=finish-n.t;
+  const ref=drag.originals.find(
+   x=>x.index===drag.index
+  );
+  if(!ref)return;
+
+  const wanted=egp42Nearest(ref.t+delta)-ref.t;
+  const minimum=-Math.min(...drag.originals.map(x=>x.t));
+  const maximum=Math.min(
+   ...drag.originals.map(x=>x.d-.03)
+  );
+  const shared=clamp(wanted,minimum,maximum);
+
+  for(const o of drag.originals){
+   const item=notes[o.index];
+   if(!item)continue;
+   item.t=o.t+shared;
+   item.d=o.d-shared;
+  }
  }
 
  if(drag.kind==='right'){
-  const o=drag.originals.find(x=>x.index===drag.index);
-  if(!o)return;
-  n.d=clamp(egp42Nearest(o.t+o.d+delta)-o.t,.03,seconds-o.t);
+  const ref=drag.originals.find(
+   x=>x.index===drag.index
+  );
+  if(!ref)return;
+
+  const wanted=
+   egp42Nearest(ref.t+ref.d+delta)-
+   (ref.t+ref.d);
+
+  const minimum=-Math.min(
+   ...drag.originals.map(x=>x.d-.03)
+  );
+  const maximum=Math.min(
+   ...drag.originals.map(
+    x=>seconds-x.t-x.d
+   )
+  );
+
+  const shared=clamp(wanted,minimum,maximum);
+
+  for(const o of drag.originals){
+   const item=notes[o.index];
+   if(!item)continue;
+   item.d=o.d+shared;
+  }
  }
 
  if(drag.kind==='move'){
@@ -961,6 +1058,8 @@ document.addEventListener('keydown',e=>{
   egp37DrawMode=false;
   cutButton.style.background='';
   egp37DrawButton.style.background='';
+  area.style.cursor='default';
+  canvas.style.cursor='default';
   e.preventDefault();
  }
  if(e.key.toLowerCase()==='d'&&!e.repeat){
@@ -968,6 +1067,8 @@ document.addEventListener('keydown',e=>{
   egp37DrawMode=true;
   cutButton.style.background='';
   egp37DrawButton.style.background='#176b62';
+  area.style.cursor=egp46PencilCursor;
+  canvas.style.cursor=egp46PencilCursor;
   e.preventDefault();
  }
 },true);

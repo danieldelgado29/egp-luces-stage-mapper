@@ -182,6 +182,10 @@ setInterval(async()=>{
   arm.textContent='DMX ARMAR';
   arm.style.background='';
   status.textContent='CONEXIÓN PERDIDA';
+  status.style.color='#ff9e9e';
+  status.title='Puente local: '+API+
+   ' · '+String(e.name||'Error')+
+   ' · '+String(e.message||e);
   console.error('[EGP Art-Net]',e);
  }finally{
   busy=false;
