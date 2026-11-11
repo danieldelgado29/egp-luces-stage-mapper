@@ -97,6 +97,11 @@ try{
   );
 }catch(_){}
 
+// V0.53 — asignación compartida con el escenario 3D.
+window.__EGP_DMX_PAR_MAPPING_V053=()=>{
+ return egp52Map.slice();
+};
+
 const egp52Selectors=[];
 
 for(let par=0;par<2;par++){

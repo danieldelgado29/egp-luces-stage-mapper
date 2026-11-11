@@ -1898,15 +1898,35 @@ function egpShowFixture(f){
   else{const choices={'Singer':['Cantante','Coros'],'Guitar':['Guitarra'],'Bass':['Bajo'],'Drums':['Batería','Percusión'],'Keys':['Piano','Teclado']};const t=scene.musicians.find(m=>(choices[st.target]||[]).includes(m.role));if(t)z.aimTarget=t.id;}
  }
 
+ // V0.53 — utilizar las mismas pistas que Art-Net.
  const preview=
   window.__EGP_SEQ_GET_FRAME_V040?.(egpShowTime);
- const lane=scene.fixtures.findIndex(x=>x.id===f.id);
 
- if(preview?.active&&lane>=0){
-  const clip=preview.lights[lane];
+ const fixtureIndex=
+  scene.fixtures.findIndex(x=>x.id===f.id);
+
+ const mapping=
+  window.__EGP_DMX_PAR_MAPPING_V053?.()||[0,1];
+
+ const physicalPar=
+  fixtureIndex>=0&&fixtureIndex<2;
+
+ const timelineLane=physicalPar
+  ?mapping[fixtureIndex]
+  :fixtureIndex;
+
+ if(preview?.active&&fixtureIndex>=0){
+  const clip=preview.lights[timelineLane];
+
+  // Los dos PAR físicos quedan apagados cuando
+  // no hay región activa en su pista asignada.
+  if(physicalPar){
+   z.intensity=0;
+  }
 
   if(clip){
    if(clip.color)z.lightColor=clip.color;
+
    z.intensity=Math.max(0,Math.min(
     100,Number(clip.level??0)
    ));
@@ -2492,7 +2512,7 @@ try{const saved=localStorage.getItem(KEY);if(saved){scene=validate(JSON.parse(sa
 if(!scene)create('bar_small');$('touchMode').value='all';renderSavedShows();switchPage('home');const ro=new ResizeObserver(resize);ro.observe($('box'));requestAnimationFrame(resize);
 })();
 </script>
-<script src="egp-show-sequencer-v033.js?v=052" defer></script>
-<script src="egp-artnet-live-v041.js?v=052" defer></script>
+<script src="egp-show-sequencer-v033.js?v=053" defer></script>
+<script src="egp-artnet-live-v041.js?v=053" defer></script>
 </body>
 </html>
