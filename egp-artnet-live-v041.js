@@ -193,7 +193,7 @@ setInterval(async()=>{
  }finally{
   busy=false;
  }
-},100);
+},50);
 
 window.addEventListener('pagehide',()=>{
  if(armed){

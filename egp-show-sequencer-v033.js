@@ -66,10 +66,72 @@ body.egp-show-mode #stagePage #egpSeq29{
  margin:0!important;transform:none!important;z-index:3!important;
 }
 body.egp-show-mode #stagePage #box canvas{display:block!important;width:100%!important;height:100%!important}
-`;document.head.appendChild(css);
+`;
+css.textContent+=`
+body.egp-show-mode #stagePage #egpSeq29{
+ height:var(--egp-panel-height,55dvh)!important;
+ flex:0 0 var(--egp-panel-height,55dvh)!important;
+ max-height:78dvh!important;
+}
+#egp48Grip{
+ height:13px;min-height:13px;flex:none;
+ background:#29465e;cursor:ns-resize;
+ display:flex;align-items:center;justify-content:center;
+ border-bottom:1px solid #6c8ca8;
+ touch-action:none;
+}
+#egp48Grip::after{
+ content:"";height:3px;width:64px;
+ background:#b7cfdf;border-radius:8px;
+}
+#egpSeq29 .egp29trackarea{cursor:default}
+`;
+document.head.appendChild(css);
 const root=document.createElement('section');root.id='egpSeq29';root.innerHTML=`<div class="egp29bar"><button id="egp29Play" title="Play/Pausa · Espacio">▶ Play</button><button id="egp29Stop" title="Stop">■ Stop</button><button id="egp33Rec" title="REC">● REC</button><button id="egp29Undo" title="Undo · ⌘Z" disabled>↶ Undo</button><button id="egp29Redo" title="Redo · ⇧⌘Z" disabled>↷ Redo</button><span id="egp29Time">00:00.000</span></div><div id="egp33Tools" class="egp33tools"><button id="egp33Quant" type="button">Cuantizar ▾</button><select id="egp33Figures" aria-label="Figura" hidden><option value="1">♩ Negra</option><option value="0.5">♫ Corchea</option><option value="0.25">♬ Semicorchea</option><option value="2">𝅗𝅥 Blanca</option><option value="4">𝅝 Redonda</option><option value="0">Libre</option></select><span id="egp33Colors"></span></div><div id="egp29Area" class="egp29trackarea" tabindex="0"><canvas id="egp29Canvas"></canvas></div><div id="egp29Scroll" class="egp29scroll"><div id="egp29ScrollContent"></div></div>`;
 const center=stage.querySelector('.center');if(!center)return;
 center.append(root);
+
+const egp48Grip=document.createElement('div');
+egp48Grip.id='egp48Grip';
+egp48Grip.title='Arrastra para cambiar altura de pistas';
+root.prepend(egp48Grip);
+
+let egp48Height=Math.round(window.innerHeight*.55);
+root.style.setProperty(
+ '--egp-panel-height',egp48Height+'px'
+);
+
+egp48Grip.addEventListener('pointerdown',event=>{
+ event.preventDefault();
+ const firstY=event.clientY;
+ const firstH=egp48Height;
+
+ egp48Grip.setPointerCapture(event.pointerId);
+
+ const move=e=>{
+  egp48Height=Math.max(
+   280,Math.min(
+    Math.round(window.innerHeight*.78),
+    firstH+firstY-e.clientY
+   )
+  );
+  root.style.setProperty(
+   '--egp-panel-height',egp48Height+'px'
+  );
+  draw();
+ };
+
+ const end=()=>{
+  egp48Grip.removeEventListener('pointermove',move);
+  egp48Grip.removeEventListener('pointerup',end);
+  egp48Grip.removeEventListener('pointercancel',end);
+ };
+
+ egp48Grip.addEventListener('pointermove',move);
+ egp48Grip.addEventListener('pointerup',end);
+ egp48Grip.addEventListener('pointercancel',end);
+});
+
 
 let cutMode=false;
 const cutButton=document.createElement('button');
@@ -110,8 +172,8 @@ function egp36Split(index,time){
 function egp36Geometry(){
  const height=getH();
  const bottom=Math.min(
-  height-85,
-  29+Math.max(75,(height-29)*.55)
+  height-150,
+  29+Math.max(60,(height-29)*.26)
  );
  const count=Math.max(1,lightCount());
  return {
@@ -161,7 +223,7 @@ function lightCount(){
 function limit(){origin=clamp(origin,0,Math.max(0,seconds-visible()))}
 function scrollSync(){const total=Math.max(1,seconds*pxs);el('egp29ScrollContent').style.width=(total+gutter)+'px';if(Math.abs(scr.scrollLeft-origin*pxs)>2)scr.scrollLeft=origin*pxs;}
 function draw(){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;const dpr=Math.min(2,devicePixelRatio||1),w=r.width,h=r.height;if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle='#0b1523';ctx.fillRect(0,0,w,h);
-const top=29,audioTop=top,audioBottom=Math.min(h-85,top+Math.max(75,(h-top)*.55)),midiTop=audioBottom+1,midiBottom=h;
+const top=29,audioTop=top,audioBottom=Math.min(h-150,top+Math.max(60,(h-top)*.26)),midiTop=audioBottom+1,midiBottom=h;
 const lights=lightCount();const laneH=(midiBottom-midiTop)/Math.max(1,lights);
 ctx.fillStyle='#112234';ctx.fillRect(0,0,w,top);ctx.fillStyle='#0b1e2a';ctx.fillRect(0,audioTop,w,audioBottom-audioTop);ctx.fillStyle='#11192b';ctx.fillRect(0,midiTop,w,midiBottom-midiTop);
 for(let k=1;k<lights;k++){ctx.strokeStyle='#2c3b4f';ctx.beginPath();ctx.moveTo(0,midiTop+k*laneH+.5);ctx.lineTo(w,midiTop+k*laneH+.5);ctx.stroke()}
@@ -331,8 +393,115 @@ const editor=el('egp33Tools'),figure=el('egp33Figures');
 const swatches=['#f7f7f4','#e5ae28','#e3484a','#35c76b','#409bf5','#b27af2','#33bfc6','#ff7b37'];
 for(const color of swatches){const b=document.createElement('button');b.type='button';b.className='egp33swatch';b.title=color;b.style.background=color;b.onclick=()=>{if(!selected.size)return;commit();for(const i of selected){if(notes[i])notes[i].color=color}draw()};el('egp33Colors').appendChild(b)}
 function syncEditor(){editor.classList.toggle('active',selected.size>0);figure.hidden=true}
-function findNote(p){const h=getH(),mt=Math.min(h-85,29+Math.max(75,(h-29)*.55)),lights=lightCount();if(p.y<=mt||lights<1)return -1;const lane=clamp(Math.floor((p.y-mt)/((h-mt)/lights)),0,lights-1),t=hitTime(p.x);for(let i=notes.length-1;i>=0;i--){const n=notes[i];if(n.lane===lane&&t>=n.t&&t<=n.t+n.d)return i}return -1}
+function findNote(p){const h=getH(),mt=Math.min(h-150,29+Math.max(60,(h-29)*.26)),lights=lightCount();if(p.y<=mt||lights<1)return -1;const lane=clamp(Math.floor((p.y-mt)/((h-mt)/lights)),0,lights-1),t=hitTime(p.x);for(let i=notes.length-1;i>=0;i--){const n=notes[i];if(n.lane===lane&&t>=n.t&&t<=n.t+n.d)return i}return -1}
 function choose(i,multi){if(i<0){if(!multi)selected.clear()}else if(multi){if(selected.has(i))selected.delete(i);else selected.add(i)}else{selected.clear();selected.add(i)}syncEditor();draw()}
+
+// V0.48 — duración colectiva de regiones.
+const egp48Length=document.createElement('select');
+egp48Length.id='egp48Length';
+egp48Length.title='Duración para los bloques seleccionados';
+egp48Length.style.cssText=
+ 'background:#18354b;color:white;border:1px solid #557089;'+
+ 'border-radius:6px;padding:5px;max-width:170px';
+
+egp48Length.innerHTML=`
+ <option value="">Duración de bloques</option>
+ <optgroup label="División del click">
+  <option value="beat:1">1 pulso</option>
+  <option value="beat:2">1/2 pulso</option>
+  <option value="beat:4">1/4 pulso</option>
+  <option value="beat:8">1/8 pulso</option>
+  <option value="beat:16">1/16 pulso</option>
+  <option value="beat:32">1/32 pulso</option>
+  <option value="beat:64">1/64 pulso</option>
+ </optgroup>
+ <optgroup label="Duración exacta">
+  <option value="ms:100">100 ms</option>
+  <option value="ms:125">125 ms</option>
+  <option value="ms:150">150 ms</option>
+  <option value="ms:200">200 ms</option>
+  <option value="ms:250">250 ms</option>
+  <option value="ms:500">500 ms</option>
+  <option value="ms:1000">1 segundo</option>
+ </optgroup>
+`;
+
+const egp48Apply=document.createElement('button');
+egp48Apply.type='button';
+egp48Apply.textContent='Aplicar duración';
+egp48Apply.title='Igualar duración de todos los seleccionados';
+
+const egp48Status=document.createElement('span');
+egp48Status.style.cssText=
+ 'font:11px system-ui;color:#a3c3da';
+
+el('egp33Colors').after(
+ egp48Length,egp48Apply,egp48Status
+);
+
+function egp48BeatDuration(t,division){
+ if(egp42Beats.length<2)return null;
+
+ let i=0;
+ while(i<egp42Beats.length-2 &&
+       egp42Beats[i+1]<=t)i++;
+
+ return Math.max(
+  .001,
+  (egp42Beats[i+1]-egp42Beats[i])/division
+ );
+}
+
+egp48Apply.onclick=()=>{
+ if(!selected.size){
+  egp48Status.textContent='Selecciona bloques';
+  return;
+ }
+
+ const value=egp48Length.value;
+ if(!value)return;
+
+ const [mode,num]=value.split(':');
+ const amount=Number(num);
+
+ if(!Number.isFinite(amount)||amount<=0)return;
+
+ if(mode==='beat'&&egp42Beats.length<2){
+  egp48Status.textContent='Primero carga el click';
+  return;
+ }
+
+ commit();
+
+ let minimum=Infinity;
+
+ for(const i of selected){
+  const n=notes[i];
+  if(!n)continue;
+
+  const requested=mode==='ms'
+   ?amount/1000
+   :egp48BeatDuration(n.t,amount);
+
+  if(requested===null)continue;
+
+  // 100 ms es el mínimo de prueba para los PAR físicos.
+  const duration=Math.max(.1,requested);
+
+  n.d=Math.min(
+   duration,Math.max(.001,seconds-n.t)
+  );
+
+  minimum=Math.min(minimum,n.d);
+ }
+
+ egp48Status.textContent=Number.isFinite(minimum)
+  ?'Aplicado · mínimo '+Math.round(minimum*1000)+' ms'
+  :'Sin cambios';
+
+ draw();
+};
+
 el('egp33Quant').onclick=()=>{if(selected.size)figure.hidden=!figure.hidden};
 figure.onchange=()=>{const ratio=Number(figure.value);if(ratio<=0||!selected.size)return;const bpm=Number(el('v27LiveBpm')?.textContent?.match(/[\d.]+/)?.[0])||120;const unit=60/bpm*ratio;commit();for(const i of selected){const n=notes[i];if(n){n.t=clamp(Math.round(n.t/unit)*unit,0,seconds);n.d=Math.max(unit,Math.round(n.d/unit)*unit)}}figure.hidden=true;draw()};
 el('egp33Rec').onclick=()=>{recArmed=!recArmed;el('egp33Rec').classList.toggle('armed',recArmed);el('egp33Rec').textContent=recArmed?'● REC ON':'● REC';if(recArmed&&!selected.size&&lightCount()>0){/* Elige pista mediante clic; no se graba sin interacción */}};
@@ -683,8 +852,11 @@ function egp36Hit(p){
 
  if(dl<=edge&&dl<=dr)kind='left';
  else if(dr<=edge)kind='right';
- else if(Math.abs(p.y-egp36LineY(n))<=7)
-  kind='level';
+ else if(
+  Math.abs(p.y-egp36LineY(n))<=7 &&
+  Math.abs(p.x-(x+right)/2)<=10 &&
+  right-x>=35
+ )kind='level';
 
  return {i,kind};
 }
