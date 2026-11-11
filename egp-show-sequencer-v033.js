@@ -71,7 +71,7 @@ css.textContent+=`
 body.egp-show-mode #stagePage #egpSeq29{
  height:var(--egp-panel-height,55dvh)!important;
  flex:0 0 var(--egp-panel-height,55dvh)!important;
- max-height:78dvh!important;
+ max-height:90dvh!important;
 }
 #egp48Grip{
  height:13px;min-height:13px;flex:none;
@@ -103,6 +103,7 @@ root.style.setProperty(
 
 egp48Grip.addEventListener('pointerdown',event=>{
  event.preventDefault();
+ event.stopPropagation();
  const firstY=event.clientY;
  const firstH=egp48Height;
 
@@ -111,7 +112,7 @@ egp48Grip.addEventListener('pointerdown',event=>{
  const move=e=>{
   egp48Height=Math.max(
    280,Math.min(
-    Math.round(window.innerHeight*.78),
+    Math.round(window.innerHeight*.90),
     firstH+firstY-e.clientY
    )
   );
@@ -1468,6 +1469,28 @@ window.__EGP_SEQ_GET_FRAME_V040=function(time){
  return {active:true,lights};
 };
 
+
+// V0.54 — tiempo compartido de grabación y reproducción.
+function egp54Time(){
+ const clock=window.__EGP_SHOW_CLOCK_V050?.();
+
+ if(clock && Number.isFinite(clock.time)){
+  return Math.max(0,clock.time);
+ }
+
+ return Math.max(0,playSec);
+}
+
+function egp54Playing(){
+ const clock=window.__EGP_SHOW_CLOCK_V050?.();
+
+ if(clock)return !!clock.playing;
+
+ return /pausa|pause|❚❚|Ⅱ/i.test(
+  el('egp29Play')?.textContent||''
+ );
+}
+
 // V0.38 — Grabación momentánea con ArrowDown.
 let egp38Hold=null;
 let egp38LastLane=0;
@@ -1480,7 +1503,7 @@ function egp38Start(){
 
  // No crear regiones inmóviles si la canción está detenida.
  const playButton=el('egp29Play');
- if(!/pausa|pause|❚❚|Ⅱ/i.test(playButton?.textContent||'')){
+ if(!egp54Playing()){
   return;
  }
 
@@ -1494,7 +1517,7 @@ function egp38Start(){
 
  const color=previous?.color||egp38LastColor;
  const level=previous?.level??100;
- const start=egp42Nearest(clamp(playSec,0,seconds));
+ const start=clamp(egp54Time(),0,seconds);
 
  commit();
 
@@ -1525,7 +1548,9 @@ function egp38Advance(){
  const n=notes[egp38Hold.index];
  if(!n)return;
 
- const end=clamp(playSec,egp38Hold.start,seconds);
+ const end=clamp(
+  egp54Time(),egp38Hold.start,seconds
+ );
  n.d=Math.max(.001,end-egp38Hold.start);
  draw();
 }
@@ -1538,7 +1563,9 @@ function egp38End(){
  const n=notes[egp38Hold.index];
 
  if(n){
-  const ending=egp42Nearest(n.t+n.d);
+  const ending=Math.max(
+   n.t,Math.min(seconds,egp54Time())
+  );
   n.d=Math.max(.01,ending-n.t);
   egp38LastLane=n.lane;
   egp38LastColor=n.color;
@@ -1585,7 +1612,25 @@ el('egpExitShow')?.addEventListener(
  'click',egp38End,{capture:true}
 );
 
-function tick(now){if(document.body.classList.contains('egp-show-mode')){let s=el('egpShowTime')?.textContent||'';const m=/^(\d+):(\d+)\.(\d+)/.exec(s.trim());if(m){const t=Number(m[1])*60+Number(m[2])+Number('0.'+m[3]);if(Number.isFinite(t)&&Math.abs(playSec-t)>.016){playSec=t;draw()}}egp38Advance();egp35Preview();el('egp29Time').textContent=fmt(playSec);const nativeBtn=el('egpShowPlay');if(nativeBtn){const t=nativeBtn.textContent||'';el('egp29Play').textContent=/pausa|pause|❚❚|Ⅱ/i.test(t)?'Ⅱ Pausa':'▶ Play'}if(!audio&&fileInput?.files?.length)decodeFile(fileInput.files[0]);if(!lastFrame||now-lastFrame>800){lastFrame=now;draw()}}requestAnimationFrame(tick)}requestAnimationFrame(tick);
+function tick(now){if(document.body.classList.contains('egp-show-mode')){let s=el('egpShowTime')?.textContent||'';const m=/^(\d+):(\d+)\.(\d+)/.exec(s.trim());if(m){
+ const t=egp54Time();
+ if(Number.isFinite(t)&&Math.abs(playSec-t)>.008){
+  playSec=t;
+  draw();
+ }
+}
+egp38Advance();egp35Preview();el('egp29Time').textContent=fmt(playSec);const nativeBtn=el('egpShowPlay');if(nativeBtn){const t=nativeBtn.textContent||'';el('egp29Play').textContent=/pausa|pause|❚❚|Ⅱ/i.test(t)?'Ⅱ Pausa':'▶ Play'}if(!audio&&fileInput?.files?.length)decodeFile(fileInput.files[0]);if(!lastFrame||now-lastFrame>800){lastFrame=now;draw()}}requestAnimationFrame(tick)}requestAnimationFrame(tick);
+
+
+// Protección de selección y punteros al cambiar de pantalla.
+document.addEventListener('fullscreenchange',()=>{
+ drag=null;
+ ptrs.clear();
+ requestAnimationFrame(()=>{
+  egp52CanvasSize();
+  draw();
+ });
+});
 
 document.addEventListener('fullscreenchange',()=>{
  requestAnimationFrame(()=>{
