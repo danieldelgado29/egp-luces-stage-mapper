@@ -665,7 +665,10 @@ area.addEventListener('pointerdown',e=>{
 
  const g=egp36Geometry();
 
- if(p.y<=g.bottom){
+ // Solo la regla superior mueve el cabezal.
+ // AUDIO y espacios vacíos permiten seleccionar
+ // mediante un rectángulo, como en Logic.
+ if(p.y<29){
   drag={kind:'seek'};
   nativeSeek(hitTime(p.x));
   return;
