@@ -21,7 +21,7 @@ body.egp-show-mode #egpSeq29{display:flex!important}
 #egpSeq29 .egp33swatch{width:25px;min-width:25px;height:25px;border:1px solid #9bafbf;border-radius:5px;padding:0;cursor:pointer}
 #egpSeq29 .egp33tools select{background:#1b3145;border:1px solid #42596c;color:#e8f5fb;border-radius:7px;padding:6px;font-size:12px}
 #egpSeq29 #egp33Rec.armed{background:#9e252e;border-color:#fd5664;color:#fff}
-#egpSeq29 .egp29trackarea{flex:none;min-height:0;overflow:visible;position:relative;touch-action:none;cursor:default}
+#egpSeq29 .egp29trackarea{flex:1;min-height:0;overflow:hidden;position:relative;touch-action:none;cursor:crosshair}
 #egpSeq29 canvas{display:block;width:100%;height:100%;touch-action:none}
 #egpSeq29 .egp29scroll{height:13px;flex:none;overflow-x:auto;overflow-y:hidden;background:#101b29}
 #egpSeq29 .egp29scroll div{height:1px}
@@ -208,46 +208,6 @@ function egp36SetLevel(n,y){
 
 const area=el('egp29Area'),canvas=el('egp29Canvas'),ctx=canvas.getContext('2d'),scr=el('egp29Scroll');
 let audio=null,loadingAudio=false,peakMin=null,peakMax=null,peakStep=64,seconds=180,pxs=85,origin=0,playSec=0,raf=null,notes=[],past=[],future=[],selected=new Set(),recArmed=false,recFrom=-1,drag=null,prevText='',lastFrame=performance.now();
-
-// EGP V0.49 — scroll vertical real de las pistas.
-const egp49Viewport=document.createElement('div');
-egp49Viewport.id='egp49Viewport';
-egp49Viewport.style.cssText=
- 'flex:1 1 0;min-height:0;overflow-y:auto;'+
- 'overflow-x:hidden;position:relative;overscroll-behavior:contain';
-
-area.parentNode.insertBefore(egp49Viewport,area);
-egp49Viewport.appendChild(area);
-
-area.style.flex='none';
-area.style.width='100%';
-area.style.minHeight='0';
-area.style.overflow='visible';
-
-const egp49LaneHeight=48;
-
-function egp49Size(){
- const count=Math.max(1,lightCount());
- const visible=Math.max(150,egp49Viewport.clientHeight);
- const target=Math.max(
-  visible,
-  115+count*egp49LaneHeight
- );
- const value=Math.ceil(target)+'px';
-
- if(area.style.height!==value){
-  area.style.height=value;
- }
-}
-
-new ResizeObserver(()=>{
- egp49Size();
- draw();
-}).observe(egp49Viewport);
-
-egp49Size();
-
-
 const gutter=84;const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const fmt=s=>{s=Math.max(0,s||0);const m=Math.floor(s/60),sec=Math.floor(s%60),ms=Math.floor((s-Math.floor(s))*1000);return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')+'.'+String(ms).padStart(3,'0')};
 const getW=()=>canvas.getBoundingClientRect().width;const getH=()=>canvas.getBoundingClientRect().height;
@@ -600,10 +560,6 @@ root.insertBefore(egp42Panel,editor);
 const egp42Music=el('egp42Music');
 const egp42Click=el('egp42Click');
 const egp42Status=el('egp42Status');
-
-egp42Music.closest('label').style.display='none';
-egp42Click.closest('label').style.display='none';
-
 
 el('egp42Snap').onchange=e=>{
  egp42SnapEnabled=e.target.checked;
@@ -1496,13 +1452,7 @@ el('egpExitShow')?.addEventListener(
 );
 
 function tick(now){if(document.body.classList.contains('egp-show-mode')){let s=el('egpShowTime')?.textContent||'';const m=/^(\d+):(\d+)\.(\d+)/.exec(s.trim());if(m){const t=Number(m[1])*60+Number(m[2])+Number('0.'+m[3]);if(Number.isFinite(t)&&Math.abs(playSec-t)>.016){playSec=t;draw()}}egp38Advance();egp35Preview();el('egp29Time').textContent=fmt(playSec);const nativeBtn=el('egpShowPlay');if(nativeBtn){const t=nativeBtn.textContent||'';el('egp29Play').textContent=/pausa|pause|❚❚|Ⅱ/i.test(t)?'Ⅱ Pausa':'▶ Play'}if(!audio&&fileInput?.files?.length)decodeFile(fileInput.files[0]);if(!lastFrame||now-lastFrame>800){lastFrame=now;draw()}}requestAnimationFrame(tick)}requestAnimationFrame(tick);
-const resizer=new ResizeObserver(()=>{
- egp49Size();
- limit();
- scrollSync();
- draw();
-});
-resizer.observe(area);
+const resizer=new ResizeObserver(()=>{limit();scrollSync();draw()});resizer.observe(area);
 
 
 // V0.32 · Carga robusta en Nuevo/Editar show; audio local por nombre de show.
