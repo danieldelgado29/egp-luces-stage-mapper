@@ -1782,6 +1782,19 @@ function downloadJSONSong(s){const data={format:'EGP_LIGHTING_SONG_V1',name:s.na
 /* V0.20: grabador en segundos, independiente del BPM y de los eventos MIDI legacy. */
 let egpRecBoundId=null,egpRecUrl=null,egpRecArmed=false;
 const egpAudio=$('egpRecAudio');
+
+// EGP V0.50 — reloj real del reproductor.
+window.__EGP_SHOW_CLOCK_V050=()=>({
+ time:Number(egpAudio.currentTime)||0,
+ playing:!!egpAudio.src &&
+  !egpAudio.paused &&
+  !egpAudio.ended &&
+  !egpAudio.seeking,
+ rate:Number(egpAudio.playbackRate)||1,
+ duration:Number.isFinite(egpAudio.duration)
+  ?egpAudio.duration
+  :0
+});
 const egpFmt=t=>{const ms=Math.round(Math.max(0,Number(t)||0)*1000);return String(Math.floor(ms/60000)).padStart(2,'0')+':'+String(Math.floor(ms%60000/1000)).padStart(2,'0')+'.'+String(ms%1000).padStart(3,'0')};
 const egpRecordEvents=s=>{if(!s)return [];if(!Array.isArray(s.performanceEvents))s.performanceEvents=[];return s.performanceEvents};
 function egpRecSetArmed(armed){egpRecArmed=!!armed;const b=$('egpRecToggle');b.classList.toggle('recording',egpRecArmed);b.textContent=egpRecArmed?'● REC ACTIVADO':'● REC apagado';b.setAttribute('aria-pressed',String(egpRecArmed));egpRecStatus()}
@@ -2480,6 +2493,6 @@ if(!scene)create('bar_small');$('touchMode').value='all';renderSavedShows();swit
 })();
 </script>
 <script src="egp-show-sequencer-v033.js?v=048" defer></script>
-<script src="egp-artnet-live-v041.js?v=048" defer></script>
+<script src="egp-artnet-live-v041.js?v=050" defer></script>
 </body>
 </html>

@@ -24,22 +24,82 @@ status.style.cssText=
 
 bar.append(arm,off,status);
 
+// V0.50 — compensación anticipada.
+const latencyBox=document.createElement('label');
+latencyBox.style.cssText=
+ 'display:flex;align-items:center;gap:5px;'+
+ 'white-space:nowrap;font:11px system-ui;color:#cce3ed';
+
+const latencyText=document.createElement('span');
+latencyText.textContent='Anticipar DMX';
+
+const latencyInput=document.createElement('input');
+latencyInput.type='range';
+latencyInput.min='0';
+latencyInput.max='400';
+latencyInput.step='10';
+latencyInput.style.width='90px';
+latencyInput.title='Anticipación de comandos DMX';
+
+let leadMs=120;
+
+try{
+ const saved=Number(
+  localStorage.getItem('EGP_DMX_LEAD_MS_V050')
+ );
+ if(Number.isFinite(saved)&&saved>=0&&saved<=400)
+  leadMs=saved;
+}catch(_){}
+
+latencyInput.value=String(leadMs);
+
+const latencyValue=document.createElement('strong');
+latencyValue.textContent=leadMs+' ms';
+
+latencyInput.addEventListener('input',()=>{
+ leadMs=Number(latencyInput.value);
+ latencyValue.textContent=leadMs+' ms';
+
+ try{
+  localStorage.setItem(
+   'EGP_DMX_LEAD_MS_V050',
+   String(leadMs)
+  );
+ }catch(_){}
+});
+
+latencyBox.append(
+ latencyText,latencyInput,latencyValue
+);
+bar.append(latencyBox);
+
 let armed=false;
 let busy=false;
 
 const el=id=>document.getElementById(id);
 
 function playing(){
+ const clock=window.__EGP_SHOW_CLOCK_V050?.();
+ if(clock)return !!clock.playing;
+
  return /pausa|pause|❚❚|Ⅱ/i.test(
   el('egp29Play')?.textContent||''
  );
 }
 
 function time(){
+ const clock=window.__EGP_SHOW_CLOCK_V050?.();
+
+ if(clock){
+  return Math.max(0,clock.time);
+ }
+
  const m=/^(\d+):(\d+)\.(\d+)/.exec(
   el('egp29Time')?.textContent||''
  );
+
  if(!m)return 0;
+
  return Number(m[1])*60+
         Number(m[2])+
         Number('0.'+m[3]);
@@ -79,8 +139,16 @@ function channels(){
 
  if(!playing())return output;
 
+ const clock=window.__EGP_SHOW_CLOCK_V050?.();
+ const rate=clock?.rate||1;
+
+ const ahead=time()+leadMs/1000*rate;
+ const previewTime=clock?.duration
+  ?Math.min(ahead,clock.duration)
+  :ahead;
+
  const frame=window.__EGP_SEQ_GET_FRAME_V040?.(
-  time()
+  previewTime
  );
 
  if(!frame?.active)return output;
@@ -177,7 +245,7 @@ setInterval(async()=>{
   });
 
   status.textContent=playing()
-   ?'DMX EN VIVO'
+   ?'DMX EN VIVO · +'+leadMs+' ms'
    :'ARMADO · STOP';
 
  }catch(e){
@@ -193,7 +261,7 @@ setInterval(async()=>{
  }finally{
   busy=false;
  }
-},50);
+},25);
 
 window.addEventListener('pagehide',()=>{
  if(armed){
